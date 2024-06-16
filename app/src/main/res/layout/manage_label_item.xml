@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/c222"
+    android:paddingHorizontal="20dp"
+    android:paddingVertical="14dp">
+
+    <ImageView
+        android:id="@+id/iconManageLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/z_ic_label"
+        android:layout_marginEnd="5dp"/>
+
+    <EditText
+        android:id="@+id/editTextManageLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/iconManageLabel"
+        android:layout_toStartOf="@id/iconEditManageLabel"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@null"
+        android:text="Label"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:lineHeight="24dp"/>
+
+    <ImageView
+        android:id="@+id/iconEditManageLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="5dp"
+        android:src="@drawable/z_ic_edit" />
+</RelativeLayout>

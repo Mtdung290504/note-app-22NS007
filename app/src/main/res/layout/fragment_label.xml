@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#333333"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:id="@+id/containerLabelFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:id="@+id/label_for_search_tv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Nhãn:"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:padding="5dp"
+            android:gravity="start"/>
+
+        <TextView
+            android:id="@+id/btnOpenManageLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Chỉnh sửa nhãn "
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:padding="5dp"
+            android:gravity="end"
+            android:background="?attr/selectableItemBackground"
+            app:drawableEndCompat="@drawable/z_ic_edit_18" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/labelRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:layout_below="@id/containerLabelFragment"/>
+
+</RelativeLayout>
