@@ -10,6 +10,6 @@ import androidx.room.PrimaryKey
 )
 data class Label(
     @PrimaryKey(autoGenerate = true)
-    val labelId: Int = 0,
+    val labelId: Long? = 0,
     val name: String
 )

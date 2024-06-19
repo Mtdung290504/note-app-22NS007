@@ -2,10 +2,12 @@ package com.example.noteapp_22ns007
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.Toast
@@ -30,7 +32,7 @@ class MainActivity: AppCompatActivity() {
     // View elements
     private lateinit var mainFragment: Fragment
     private lateinit var labelFragment: LabelFragment
-    lateinit var manageLabelFragment: ManageLabelFragment
+    private lateinit var manageLabelFragment: ManageLabelFragment
     private lateinit var searchBar: EditText
     private lateinit var cardView: CardView
 
@@ -48,24 +50,7 @@ class MainActivity: AppCompatActivity() {
         config()
         initializeViewModelsAndDao()
         initializeViewElements(binding)
-
-        if (savedInstanceState == null) {
-            mainFragment = MainFragment()
-            labelFragment = LabelFragment()
-            manageLabelFragment = ManageLabelFragment()
-
-            supportFragmentManager.beginTransaction()
-                .add(binding.fragmentContainer.id, mainFragment, "MainFragment")
-                .add(binding.fragmentContainer.id, labelFragment, "LabelFragment")
-                .add(binding.bigFragmentContainer.id, manageLabelFragment, "ManageLabelFragment")
-                .hide(manageLabelFragment)
-                .hide(labelFragment)
-                .commit()
-        } else {
-            mainFragment = supportFragmentManager.findFragmentByTag("MainFragment") as MainFragment
-            labelFragment = supportFragmentManager.findFragmentByTag("LabelFragment") as LabelFragment
-            manageLabelFragment = supportFragmentManager.findFragmentByTag("ManageLabelFragment") as ManageLabelFragment
-        }
+        initializeFragments(savedInstanceState)
     }
 
     private fun config() {
@@ -88,8 +73,6 @@ class MainActivity: AppCompatActivity() {
     private fun initializeViewElements(binding: ActivityMainBinding) {
         searchBar = binding.searchBar
         cardView = binding.bigFragmentContainer
-//        mainFragment = MainFragment()
-//        labelFragment = LabelFragment()
 
         searchBar.setOnFocusChangeListener { _, hasFocus ->
             val valueToSearch: String = searchBar.text.toString()
@@ -98,12 +81,12 @@ class MainActivity: AppCompatActivity() {
                 // changeFragment(labelFragment, AnimationType.SLIDE_IN_TOP, "LabelFragment")
                 if(valueToSearch.isBlank())
                     displayLabelFragment()
-                else
-                    (mainFragment as MainFragment).filterNotes(valueToSearch)
+//                else
+//                    (mainFragment as MainFragment).filterNotes(valueToSearch)
             } else {
                 // changeFragment(mainFragment, AnimationType.SLIDE_IN_TOP, "MainFragment")
-                displayMainFragment()
-                (mainFragment as MainFragment).filterNotes(valueToSearch)
+//                displayMainFragment()
+//                (mainFragment as MainFragment).filterNotes(valueToSearch)
             }
         }
 
@@ -128,21 +111,39 @@ class MainActivity: AppCompatActivity() {
         })
     }
 
+    private fun initializeFragments(savedInstanceState: Bundle?) {
+        if (savedInstanceState == null) {
+            mainFragment = MainFragment()
+            labelFragment = LabelFragment()
+
+            supportFragmentManager.beginTransaction()
+                .add(binding.fragmentContainer.id, mainFragment, "MainFragment")
+                .add(binding.fragmentContainer.id, labelFragment, "LabelFragment")
+                .hide(labelFragment)
+                .commit()
+        } else {
+            mainFragment = supportFragmentManager.findFragmentByTag("MainFragment") as MainFragment
+            labelFragment = supportFragmentManager.findFragmentByTag("LabelFragment") as LabelFragment
+        }
+
+        manageLabelFragment = ManageLabelFragment()
+    }
+
     @Suppress("DEPRECATION")
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         val editingFragment = supportFragmentManager.findFragmentById(binding.bigFragmentContainer.id)
 
         if(editingFragment is EditNoteFragment
-            || editingFragment is ManageLabelFragment && manageLabelFragment.isVisibleInActivity()) {
-            val searchValue = binding.searchBar.text.toString()
-
+            || editingFragment is ManageLabelFragment) {
             if (editingFragment is EditNoteFragment) {
                 editingFragment.saveDataAndHide()
-                (mainFragment as MainFragment).filterNotes(searchValue)
             } else {
+                val manageLabelFragment = editingFragment as ManageLabelFragment
+                if(manageLabelFragment.clearFocus())
+                    return
                 hideManageLabelFragment()
-                (mainFragment as MainFragment).filterNotes(searchValue)
+                binding.searchBar.requestFocus()
             }
         } else {
             if (binding.searchBar.isFocused) {
@@ -152,6 +153,7 @@ class MainActivity: AppCompatActivity() {
 
                 // Clear focus from searchBar
                 binding.searchBar.clearFocus()
+                displayMainFragment()
                 return
             }
 
@@ -194,6 +196,7 @@ class MainActivity: AppCompatActivity() {
     }
     fun hideEditNoteFragment(f: EditNoteFragment) {
         cardView.isClickable = false
+
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
             .remove(f)
@@ -204,16 +207,14 @@ class MainActivity: AppCompatActivity() {
         cardView.isClickable = true
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(R.anim.slide_in_bottom, R.anim.slide_out_top)
-//            .replace(binding.bigFragmentContainer.id, f, "ManageLabelFragment")
-            .show(manageLabelFragment)
+            .replace(binding.bigFragmentContainer.id, manageLabelFragment, "ManageLabelFragment")
             .commit()
     }
     fun hideManageLabelFragment() {
         cardView.isClickable = false
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(R.anim.slide_in_top, R.anim.slide_out_bottom)
-//            .remove(f)
-            .hide(manageLabelFragment)
+            .remove(manageLabelFragment)
             .commit()
     }
 
@@ -231,121 +232,6 @@ class MainActivity: AppCompatActivity() {
             .hide(mainFragment)
             .commit()
     }
-
-    /*
-    fun changeFragment(f: Fragment, animationType: AnimationType, tag: String, callback: (() -> Unit)? = null) {
-        val fragmentManager = supportFragmentManager
-        val fragmentTransaction = fragmentManager.beginTransaction()
-
-        // Find the current fragment
-        val currentFragment = fragmentManager.findFragmentById(binding.fragmentContainer.id)
-
-        // Logic to decide animation based on currentFragment and new fragment
-        val actualAnimationType = when {
-            currentFragment is MainFragment && f is LabelFragment -> AnimationType.SLIDE_IN_TOP
-            currentFragment is LabelFragment && f is MainFragment -> AnimationType.SLIDE_IN_BOTTOM
-            currentFragment is EditNoteFragment && f is MainFragment -> AnimationType.SLIDE_IN_RIGHT
-            else -> animationType // Default animation
-        }
-
-        // Add custom animations based on the type
-        when (actualAnimationType) {
-            AnimationType.SLIDE_IN_TOP -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_top, R.anim.slide_out_bottom
-            )
-            AnimationType.SLIDE_IN_BOTTOM -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_bottom, R.anim.slide_out_top
-            )
-            AnimationType.SLIDE_IN_RIGHT -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_right, R.anim.slide_out_left
-            )
-            AnimationType.SLIDE_IN_LEFT -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_left, R.anim.slide_out_right
-            )
-            AnimationType.FADE -> fragmentTransaction.setCustomAnimations(
-                R.anim.fade_in, R.anim.fade_out
-            )
-            AnimationType.NONE -> {} // No animation
-        }
-
-        fragmentTransaction.replace(binding.fragmentContainer.id, f, tag)
-
-        // Add to back stack only if the new fragment is not MainFragment
-        if (f !is MainFragment) {
-            fragmentTransaction.addToBackStack(tag)
-        }
-        if(callback != null) {
-            callback()
-        }
-
-        fragmentTransaction.commit()
-    }*/
-    /*
-    fun changeFragment(f: Fragment, animationType: AnimationType, tag: String, callback: (() -> Unit)? = null) {
-        val fragmentManager = supportFragmentManager
-        val fragmentTransaction = fragmentManager.beginTransaction()
-
-        // Find the current fragment
-        val currentFragment = fragmentManager.findFragmentById(binding.fragmentContainer.id)
-
-        // Logic to decide animation based on currentFragment and new fragment
-        val actualAnimationType = when {
-            currentFragment is MainFragment && f is LabelFragment -> AnimationType.SLIDE_IN_TOP
-            currentFragment is LabelFragment && f is MainFragment -> AnimationType.SLIDE_IN_BOTTOM
-            currentFragment is EditNoteFragment && f is MainFragment -> AnimationType.SLIDE_IN_RIGHT
-            else -> animationType // Default animation
-        }
-
-        // Add custom animations based on the type
-        when (actualAnimationType) {
-            AnimationType.SLIDE_IN_TOP -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_top, R.anim.slide_out_bottom
-            )
-            AnimationType.SLIDE_IN_BOTTOM -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_bottom, R.anim.slide_out_top
-            )
-            AnimationType.SLIDE_IN_RIGHT -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_right, R.anim.slide_out_left
-            )
-            AnimationType.SLIDE_IN_LEFT -> fragmentTransaction.setCustomAnimations(
-                R.anim.slide_in_left, R.anim.slide_out_right
-            )
-            AnimationType.FADE -> fragmentTransaction.setCustomAnimations(
-                R.anim.fade_in, R.anim.fade_out
-            )
-            AnimationType.NONE -> {} // No animation
-        }
-
-        // Check if the fragment is already added
-        val fragmentInManager = fragmentManager.findFragmentByTag(tag)
-        if (fragmentInManager != null) {
-            // Hide the current fragment
-            currentFragment?.let {
-                fragmentTransaction.hide(it)
-            }
-            // Show the new fragment
-            fragmentTransaction.show(fragmentInManager)
-        } else {
-            // Hide the current fragment
-            currentFragment?.let {
-                fragmentTransaction.hide(it)
-            }
-            // Add the new fragment
-            fragmentTransaction.add(binding.fragmentContainer.id, f, tag)
-        }
-
-        // Add to back stack only if the new fragment is not MainFragment
-        if (f !is MainFragment) {
-            fragmentTransaction.addToBackStack("MainFragment")
-        }
-
-        if (callback != null) {
-            callback()
-        }
-
-        fragmentTransaction.commit()
-    }
-    */
 }
 
 enum class AnimationType {

@@ -36,6 +36,7 @@
     </LinearLayout>
 
     <ScrollView
+        android:id="@+id/scrollContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/header"
@@ -55,31 +56,35 @@
                 android:layout_height="wrap_content">
 
                 <EditText
+                    android:id="@+id/addLabelEdt"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentBottom="true"
-                    android:layout_marginStart="2dp"
-                    android:layout_marginTop="2dp"
-                    android:layout_marginEnd="2dp"
-                    android:layout_marginBottom="2dp"
-                    android:layout_toStartOf="@id/addLabel"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:layout_toStartOf="@id/addLabelBtn"
                     android:hint="Nhãn mới"
-                    android:paddingHorizontal="15dp"
-                    android:paddingVertical="10dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="15dp"
                     android:textColorHint="@color/cddd"
-                    android:background="@null"/>
+                    android:textColor="@color/white" />
                 <ImageButton
-                    android:id="@+id/addLabel"
+                    android:id="@+id/addLabelBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentBottom="true"
+                    android:layout_margin="5dp"
                     android:padding="10dp"
                     android:background="@drawable/z_note_item_background"
-                    android:src="@drawable/z_ic_add"/>
+                    android:foreground="?attr/selectableItemBackground"
+                    android:src="@drawable/z_ic_add"
+                    android:layout_centerVertical="true"/>
             </RelativeLayout>
 
             <!-- RecyclerView for labels -->

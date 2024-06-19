@@ -20,6 +20,7 @@ class LabelFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var labelViewModel: LabelViewModel
+    private lateinit var labelAdapter: LabelAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,15 +42,20 @@ class LabelFragment : Fragment() {
     private fun initializeViewElements(binding: FragmentLabelBinding) {
         labelViewModel = (activity as MainActivity).labelViewModel
 
+        labelAdapter = LabelAdapter(emptyList())
+
+        binding.labelRecyclerView.apply {
+            layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+            adapter = labelAdapter
+        }
+
         labelViewModel.getAllLabels().observe(viewLifecycleOwner) {
-            labels ->
-            binding.labelRecyclerView.layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-            binding.labelRecyclerView.adapter = LabelAdapter(labels)
+            labels -> labelAdapter.updateLabel(labels)
         }
 
         binding.btnOpenManageLabel.setOnClickListener {
             mainActivity.hideKeyBoardForSearchBar()
-            mainActivity.displayManageLabelFragment()
+            mainActivity.displayManageLabelFragment(/*ManageLabelFragment()*/)
         }
     }
 }

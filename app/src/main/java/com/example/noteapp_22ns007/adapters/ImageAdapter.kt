@@ -1,5 +1,6 @@
 package com.example.noteapp_22ns007.adapters
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.ViewGroup

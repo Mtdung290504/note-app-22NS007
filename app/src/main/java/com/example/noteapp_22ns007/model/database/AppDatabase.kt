@@ -14,7 +14,7 @@ import com.example.noteapp_22ns007.model.database.entities.NoteLabelCrossRef
 
 @Database(
     entities = [Note::class, Label::class, NoteLabelCrossRef::class],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

@@ -13,11 +13,14 @@ import kotlinx.coroutines.launch
 class LabelViewModel(private val labelDao: LabelDao) : ViewModel() {
     private var _insertedLabelId: Long = -1
     private val _insertResult = MutableLiveData<Boolean>()
+    private val _updateResult = MutableLiveData<Boolean>()
 
     val insertedLabelId: Long
         get() = _insertedLabelId
     val insertResult: LiveData<Boolean>
         get() = _insertResult
+    val updateResult: LiveData<Boolean>
+        get() = _updateResult
 
     fun insert(label: Label) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -29,7 +32,8 @@ class LabelViewModel(private val labelDao: LabelDao) : ViewModel() {
 
     fun update(label: Label) {
         viewModelScope.launch(Dispatchers.IO) {
-            labelDao.update(label)
+            val result = labelDao.update(label)
+            _updateResult.postValue(result != 0)
         }
     }
 
