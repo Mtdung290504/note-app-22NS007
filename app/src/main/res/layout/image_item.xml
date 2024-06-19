@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_margin="4dp">
@@ -7,7 +8,8 @@
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
-        android:layout_height="150dp"
-        android:scaleType="centerCrop"
-        android:background="?attr/selectableItemBackground"/>
+        android:layout_height="300dp"
+        android:background="?attr/selectableItemBackground"
+        tools:ignore="ContentDescription"
+        android:adjustViewBounds="true" />
 </FrameLayout>

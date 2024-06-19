@@ -12,7 +12,6 @@ class EditNoteBottomSheetFragment : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
 
     private lateinit var takePictureClickHandler: () -> Unit
-    private lateinit var getPictureClickHandler: () -> Unit
     private lateinit var deleteClickHandler: () -> Unit
     private lateinit var labelClickHandler: () -> Unit
     private lateinit var pinClickHandler: () -> Unit
@@ -35,9 +34,6 @@ class EditNoteBottomSheetFragment : BottomSheetDialogFragment() {
             takePicture.setOnClickListener {
                 takePictureClickHandler()
             }
-            getPicture.setOnClickListener {
-                getPictureClickHandler()
-            }
             delete.setOnClickListener {
                 deleteClickHandler()
             }
@@ -55,7 +51,6 @@ class EditNoteBottomSheetFragment : BottomSheetDialogFragment() {
 
     private fun clearListeners() {
         binding.takePicture.setOnClickListener(null)
-        binding.getPicture.setOnClickListener(null)
         binding.delete.setOnClickListener(null)
         binding.label.setOnClickListener(null)
         binding.pin.setOnClickListener(null)
@@ -64,11 +59,6 @@ class EditNoteBottomSheetFragment : BottomSheetDialogFragment() {
 
     fun setTakePictureListener(takePictureClickHandler: () -> Unit): EditNoteBottomSheetFragment {
         this.takePictureClickHandler = takePictureClickHandler
-        return this
-    }
-
-    fun setGetPictureListener(getPictureClickHandler: () -> Unit): EditNoteBottomSheetFragment {
-        this.getPictureClickHandler = getPictureClickHandler
         return this
     }
 

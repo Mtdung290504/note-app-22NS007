@@ -2,17 +2,16 @@ package com.example.noteapp_22ns007
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Rect
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.MenuItem
 import android.view.View
-import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.noteapp_22ns007.fragments.LabelFragment
@@ -21,26 +20,36 @@ import com.example.noteapp_22ns007.databinding.ActivityMainBinding
 import com.example.noteapp_22ns007.fragments.EditNoteFragment
 import com.example.noteapp_22ns007.fragments.ManageLabelFragment
 import com.example.noteapp_22ns007.model.database.AppDatabase
+import com.example.noteapp_22ns007.model.database.daos.ImageDao
 import com.example.noteapp_22ns007.model.database.daos.LabelDao
 import com.example.noteapp_22ns007.model.database.daos.NoteDao
+import com.example.noteapp_22ns007.model.viewmodels.ImageViewModel
 import com.example.noteapp_22ns007.model.viewmodels.LabelViewModel
 import com.example.noteapp_22ns007.model.viewmodels.NoteViewModel
+import com.example.noteapp_22ns007.model.viewmodels.SearchViewModel
+import com.google.android.material.navigation.NavigationView
 
-class MainActivity: AppCompatActivity() {
+class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityMainBinding
 
     // View elements
-    private lateinit var mainFragment: Fragment
+    private lateinit var mainFragment: MainFragment
     private lateinit var labelFragment: LabelFragment
     private lateinit var manageLabelFragment: ManageLabelFragment
     private lateinit var searchBar: EditText
     private lateinit var cardView: CardView
 
-    // View models and dao
+    // View models
     lateinit var noteViewModel: NoteViewModel
     lateinit var labelViewModel: LabelViewModel
+    lateinit var imageViewModel: ImageViewModel
+    lateinit var searchViewModel: SearchViewModel
+
+    // Database
+    private lateinit var appDatabase: AppDatabase
     private lateinit var noteDao: NoteDao
     private lateinit var labelDao: LabelDao
+    private lateinit var imageDao: ImageDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,9 +57,10 @@ class MainActivity: AppCompatActivity() {
         setContentView(binding.root)
 
         config()
-        initializeViewModelsAndDao()
+        initializeViewModelsAndDb()
         initializeViewElements(binding)
         initializeFragments(savedInstanceState)
+        initializeNav()
     }
 
     private fun config() {
@@ -58,14 +68,20 @@ class MainActivity: AppCompatActivity() {
         window.statusBarColor = Color.rgb(0, 0,0) // Set color for status bar
     }
 
-    private fun initializeViewModelsAndDao() {
-        noteDao = AppDatabase.getDatabase(application).noteDao()
-        labelDao = AppDatabase.getDatabase(application).labelDao()
+    private fun initializeViewModelsAndDb() {
+        appDatabase = AppDatabase.getDatabase(application)
+        noteDao = appDatabase.noteDao()
+        labelDao = appDatabase.labelDao()
+        imageDao = appDatabase.imageDao()
 
         val noteViewModelFactory = NoteViewModel.NoteViewModelFactory(noteDao)
         val labelViewModelFactory = LabelViewModel.LabelViewModelFactory(labelDao)
+        val imageViewModelFactory = ImageViewModel.ImageViewModelFactory(imageDao)
+
         noteViewModel = ViewModelProvider(this, noteViewModelFactory)[NoteViewModel::class.java]
         labelViewModel = ViewModelProvider(this, labelViewModelFactory)[LabelViewModel::class.java]
+        imageViewModel = ViewModelProvider(this, imageViewModelFactory)[ImageViewModel::class.java]
+        searchViewModel = ViewModelProvider(this)[SearchViewModel::class.java]
 
         noteViewModel.deleteEmptyNotes()
     }
@@ -75,18 +91,8 @@ class MainActivity: AppCompatActivity() {
         cardView = binding.bigFragmentContainer
 
         searchBar.setOnFocusChangeListener { _, hasFocus ->
-            val valueToSearch: String = searchBar.text.toString()
-
-            if (hasFocus) {
-                // changeFragment(labelFragment, AnimationType.SLIDE_IN_TOP, "LabelFragment")
-                if(valueToSearch.isBlank())
-                    displayLabelFragment()
-//                else
-//                    (mainFragment as MainFragment).filterNotes(valueToSearch)
-            } else {
-                // changeFragment(mainFragment, AnimationType.SLIDE_IN_TOP, "MainFragment")
-//                displayMainFragment()
-//                (mainFragment as MainFragment).filterNotes(valueToSearch)
+            if(hasFocus && searchBar.text.toString().isBlank()) {
+                displayLabelFragment()
             }
         }
 
@@ -95,16 +101,15 @@ class MainActivity: AppCompatActivity() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val query = s.toString()
+
                 if(query.isEmpty()) {
-                    // changeFragment(labelFragment, AnimationType.SLIDE_IN_TOP, "LabelFragment")
                     displayLabelFragment()
-                    (mainFragment as MainFragment).filterNotes(s.toString())
+                    mainFragment.filterNotes(s.toString())
+                    return
                 }
-                else {
-                    // changeFragment(mainFragment, AnimationType.SLIDE_IN_TOP, "MainFragment")
-                    displayMainFragment()
-                    (mainFragment as MainFragment).filterNotes(s.toString())
-                }
+
+                displayMainFragment()
+                mainFragment.filterNotes(s.toString())
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -124,9 +129,21 @@ class MainActivity: AppCompatActivity() {
         } else {
             mainFragment = supportFragmentManager.findFragmentByTag("MainFragment") as MainFragment
             labelFragment = supportFragmentManager.findFragmentByTag("LabelFragment") as LabelFragment
+
+            supportFragmentManager.beginTransaction()
+                .hide(labelFragment)
+                .show(mainFragment)
+                .commit()
         }
 
         manageLabelFragment = ManageLabelFragment()
+    }
+
+    private fun initializeNav() {
+        binding.navView.setNavigationItemSelectedListener(this)
+        binding.btnOpenNav.setOnClickListener {
+            binding.drawerLayout.openDrawer(GravityCompat.START)
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -134,24 +151,14 @@ class MainActivity: AppCompatActivity() {
     override fun onBackPressed() {
         val editingFragment = supportFragmentManager.findFragmentById(binding.bigFragmentContainer.id)
 
-        if(editingFragment is EditNoteFragment
-            || editingFragment is ManageLabelFragment) {
-            if (editingFragment is EditNoteFragment) {
-                editingFragment.saveDataAndHide()
-            } else {
-                val manageLabelFragment = editingFragment as ManageLabelFragment
-                if(manageLabelFragment.clearFocus())
-                    return
-                hideManageLabelFragment()
-                binding.searchBar.requestFocus()
-            }
+        if(editingFragment is EditNoteFragment) {
+            editingFragment.saveDataAndHide()
+        } else if(editingFragment is ManageLabelFragment) {
+            if(editingFragment.clearFocus()) return
+            hideManageLabelFragment()
+            binding.searchBar.requestFocus()
         } else {
             if (binding.searchBar.isFocused) {
-                // Hide the keyboard
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(binding.searchBar.windowToken, 0)
-
-                // Clear focus from searchBar
                 binding.searchBar.clearFocus()
                 displayMainFragment()
                 return
@@ -231,6 +238,22 @@ class MainActivity: AppCompatActivity() {
             .show(labelFragment)
             .hide(mainFragment)
             .commit()
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_trash -> {
+                // Handle the home action
+            }
+            R.id.nav_archive -> {
+                // Handle the gallery action
+            }
+            R.id.nav_label -> {
+                // Handle the slideshow action
+            }
+        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
     }
 }
 

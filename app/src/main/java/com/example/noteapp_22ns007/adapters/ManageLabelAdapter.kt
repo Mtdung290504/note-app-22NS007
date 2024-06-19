@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.example.noteapp_22ns007.R
+import com.example.noteapp_22ns007.Utils
 import com.example.noteapp_22ns007.databinding.ManageLabelItemBinding
 import com.example.noteapp_22ns007.fragments.ManageLabelFragment
 import com.example.noteapp_22ns007.model.database.entities.Label
@@ -54,18 +55,13 @@ class ManageLabelAdapter(
                     updateLabelSuccessLiveData = labelViewModel.updateResult
                     updateLabelSuccessLiveData?.observe(f.viewLifecycleOwner) {
                         success -> if (!success) {
-                            Toast.makeText(f.context, "Nhãn \"$currentLabelName\" đã tồn tại", Toast.LENGTH_SHORT).show()
+                            Utils.notification(f.view, "Nhãn \"$currentLabelName\" đã tồn tại") {}
                             binding.editTextManageLabel.setText(oldLabelName)
-                            updateLabelSuccessLiveData!!.removeObservers(f.viewLifecycleOwner)
-                            return@observe
                         } else {
-                            Toast.makeText(f.context, "Cập nhật thành công", Toast.LENGTH_SHORT).show()
-                            updateLabelSuccessLiveData!!.removeObservers(f.viewLifecycleOwner)
-                            return@observe
-//                            labels[adapterPosition] = newLabel
-//                            notifyItemChanged(adapterPosition)
-//                            binding.editTextManageLabel.clearFocus()
+                            Utils.notification(f.view, "Cập nhật thành công") {}
                         }
+                        updateLabelSuccessLiveData!!.removeObservers(f.viewLifecycleOwner)
+                        return@observe
                     }
                 } else {
                     binding.editTextManageLabel.requestFocus()
@@ -79,10 +75,7 @@ class ManageLabelAdapter(
                     showDeleteConfirmationDialog(
                         onConfirm = {
                             labelViewModel.deleteLabelById(labelToDelete.labelId!!)
-                            Toast.makeText(f.context, "Đã xóa nhãn ${labelToDelete.name}", Toast.LENGTH_SHORT).show()
-//                            labels.removeAt(adapterPosition)
-//                            notifyItemRemoved(adapterPosition)
-//                            notifyItemRangeChanged(adapterPosition, labels.size)
+                            Utils.notification(f.view, "Đã xóa nhãn \"${labelToDelete.name}\"") {}
                         },
                         onCancel = {}
                     )

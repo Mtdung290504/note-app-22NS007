@@ -17,12 +17,23 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.noteapp_22ns007.MainActivity
 import android.Manifest
+import android.graphics.Color
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.KeyEvent
+import android.widget.EditText
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.noteapp_22ns007.Utils
 import com.example.noteapp_22ns007.adapters.ImageAdapter
 import com.example.noteapp_22ns007.databinding.FragmentEditNoteBinding
+import com.example.noteapp_22ns007.model.database.Converters
 import com.example.noteapp_22ns007.model.database.entities.Label
 import com.example.noteapp_22ns007.model.database.entities.Note
+import com.example.noteapp_22ns007.model.database.entities.Image
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +51,10 @@ class EditNoteFragment : Fragment() {
     private lateinit var dateCreated: Date
     private lateinit var labels: List<Label>
     private lateinit var imageAdapter: ImageAdapter
-    private val images: MutableList<Bitmap> = mutableListOf()
+    private lateinit var imageLiveData: LiveData<List<Image>>
+    private var images: List<Image> = listOf()
+
+    private val converters = Converters()
 
     private lateinit var editNoteBottomSheetFragment: EditNoteBottomSheetFragment
 
@@ -73,19 +87,14 @@ class EditNoteFragment : Fragment() {
     private fun saveData() {
         val noteTitle = binding.noteTitle.text.toString().trim()
         val noteContent = binding.noteContent.text.toString().trim()
+        val updatedNote = Note(
+            noteId = noteId,
+            title = noteTitle,
+            content = noteContent,
+            dateCreated = dateCreated
+        )
 
-        if (noteTitle.isBlank() && noteContent.isBlank()) {
-            mainActivity.noteViewModel.deleteNoteById(noteId)
-            Toast.makeText(context, "Đã xóa ghi chú trống", Toast.LENGTH_SHORT).show()
-        } else {
-            val updatedNote = Note(
-                noteId = noteId,
-                title = noteTitle,
-                content = noteContent,
-                dateCreated = dateCreated
-            )
-            mainActivity.noteViewModel.update(updatedNote)
-        }
+        mainActivity.noteViewModel.update(updatedNote)
     }
 
     private fun initializeViewElements(binding: FragmentEditNoteBinding) {
@@ -104,15 +113,29 @@ class EditNoteFragment : Fragment() {
         }
         checkImageContainer()
 
+        imageLiveData = mainActivity.imageViewModel.getImageOfNote(noteId)
+        imageLiveData.observe(viewLifecycleOwner) { imagesOfNote ->
+            images = imagesOfNote
+            imageAdapter.updateImage(images)
+            checkImageContainer()
+        }
+
         editNoteBottomSheetFragment = EditNoteBottomSheetFragment()
             .setDeleteListener {
                 val noteTitle = binding.noteTitle.text
+
                 mainActivity.noteViewModel.deleteNoteById(noteId)
+                mainActivity.imageViewModel.deleteImageOfNote(noteId)
+
                 binding.noteTitle.text = null
                 binding.noteContent.text = null
                 editNoteBottomSheetFragment.dismiss()
+
                 mainActivity.hideEditNoteFragment(this)
-                Toast.makeText(context, "Deleted note::$noteId: \"$noteTitle\"", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(context, "Đã xóa note \"$noteTitle\"", Toast.LENGTH_SHORT).show()
+                Utils.notification(view, "Đã xóa note \"$noteTitle\"") {
+                    return@notification
+                }
             }
             .setTakePictureListener {
                 if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
@@ -136,6 +159,8 @@ class EditNoteFragment : Fragment() {
                 Toast.makeText(context, "Archived note: $noteId", Toast.LENGTH_SHORT).show()
             }
 
+        setupSaveActionForEditText(binding.noteTitle)
+        setupSaveActionForEditText(binding.noteContent)
         binding.moreOptions.setOnClickListener {
             @Suppress("DEPRECATION")
             editNoteBottomSheetFragment.show(requireFragmentManager(), editNoteBottomSheetFragment.tag)
@@ -143,6 +168,35 @@ class EditNoteFragment : Fragment() {
 
         binding.fabSave.setOnClickListener {
             saveDataAndHide()
+        }
+    }
+
+    private fun setupSaveActionForEditText(editText: EditText) {
+        editText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s != null && (s.endsWith(" ") || s.endsWith("\n"))) {
+                    saveData()
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) { }
+        })
+
+        editText.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                saveData()
+            }
+        }
+
+        editText.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                saveData()
+                true
+            } else {
+                false
+            }
         }
     }
 
@@ -155,7 +209,16 @@ class EditNoteFragment : Fragment() {
     }
 
     fun saveDataAndHide() {
-        saveData()
+        val noteTitle = binding.noteTitle.text.toString().trim()
+        val noteContent = binding.noteContent.text.toString().trim()
+
+        if (noteTitle.isBlank() && noteContent.isBlank()) {
+            mainActivity.noteViewModel.deleteNoteById(noteId)
+            Toast.makeText(context, "Đã xóa ghi chú trống", Toast.LENGTH_SHORT).show()
+        } else {
+            saveData()
+        }
+
         mainActivity.hideEditNoteFragment(this)
     }
 
@@ -174,10 +237,7 @@ class EditNoteFragment : Fragment() {
 
             // Xử lý ảnh trong background thread
             lifecycleScope.launch(Dispatchers.IO) {
-                withContext(Dispatchers.Main) {
-                    imageAdapter.addImage(photo)
-                    checkImageContainer()
-                }
+                mainActivity.imageViewModel.insert(Image(null, noteId, converters.fromBitmap(photo)))
             }
         }
     }

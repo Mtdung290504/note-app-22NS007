@@ -13,6 +13,5 @@ data class Note(
     val dateCreated: Date,
     val archived: Boolean? = false,
     val pinned: Boolean? = false,
-    val deleted: Boolean? = false,
-    val images: List<ByteArray>? = emptyList()
+    val deleted: Boolean? = false
 )

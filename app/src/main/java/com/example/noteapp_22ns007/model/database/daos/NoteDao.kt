@@ -22,6 +22,27 @@ interface NoteDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addLabelToNote(crossRef: NoteLabelCrossRef)
 
+    /**
+     * Bổ sung vào ViewModel
+     * */
+        @Query("UPDATE notes SET archived = 1 WHERE noteId = :noteId")
+        suspend fun archive(noteId: Long)
+
+        @Query("UPDATE notes SET archived = 0 WHERE noteId = :noteId")
+        suspend fun unArchive(noteId: Long)
+
+        @Query("UPDATE notes SET deleted = 1 WHERE noteId = :noteId")
+        suspend fun moveToTrash(noteId: Long)
+
+        @Query("UPDATE notes SET deleted = 0 WHERE noteId = :noteId")
+        suspend fun removeFromTrash(noteId: Long)
+
+        @Query("UPDATE notes SET pinned = 1 WHERE noteId = :noteId")
+        suspend fun pin(noteId: Long)
+
+        @Query("UPDATE notes SET pinned = 0 WHERE noteId = :noteId")
+        suspend fun unPin(noteId: Long)
+
     @Query("DELETE FROM notes_n_labels WHERE noteId = :noteId AND labelId = :labelId")
     suspend fun removeLabelFromNote(noteId: Long, labelId: Long)
 

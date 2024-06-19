@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_trash"
+        android:icon="@drawable/z_ic_delete_note"
+        android:title="Thùng rác" />
+    <item
+        android:id="@+id/nav_archive"
+        android:icon="@drawable/z_ic_archive"
+        android:title="Lưu trữ" />
+    <item
+        android:id="@+id/nav_label"
+        android:icon="@drawable/z_ic_label"
+        android:title="Quản lý nhãn" />
+</menu>
