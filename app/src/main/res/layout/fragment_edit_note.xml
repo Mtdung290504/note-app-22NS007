@@ -64,6 +64,17 @@
                 android:textStyle="bold"
                 android:inputType="textCapWords" />
 
+            <TextView
+                android:id="@+id/labelForImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hình ảnh"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="10dp"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"/>
+
             <!-- RecyclerView for images -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/imageRecyclerView"
@@ -77,20 +88,58 @@
                 android:scrollbars="horizontal"
                 android:background="@drawable/z_note_item_background"/>
 
+            <TextView
+                android:id="@+id/labelForLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nhãn"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="10dp"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"/>
+
+            <!-- RecyclerView for images -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/labelRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="16dp"
+                android:padding="5dp"
+                android:layout_marginHorizontal="16dp"
+                android:orientation="horizontal"
+                android:scrollbars="horizontal"
+                android:background="@drawable/z_note_item_background"/>
+
+            <TextView
+                android:id="@+id/labelForNote"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ghi chú"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="10dp"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"/>
+
             <!-- EditText for content -->
             <EditText
                 android:id="@+id/noteContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"
-                android:layout_marginHorizontal="10dp"
-                android:padding="10dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="16dp"
+                android:padding="15dp"
                 android:hint="Ghi chú..."
                 android:textColor="@android:color/white"
                 android:textColorHint="#888"
                 android:textSize="16sp"
-                android:lineHeight="24sp"
+                android:lineHeight="25sp"
                 android:gravity="start"
+                android:foreground="@drawable/z_note_item_background"
                 android:inputType="textMultiLine"/>
         </LinearLayout>
     </ScrollView>

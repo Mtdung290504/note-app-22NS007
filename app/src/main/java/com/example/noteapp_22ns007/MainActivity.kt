@@ -1,5 +1,6 @@
 package com.example.noteapp_22ns007
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
@@ -102,14 +103,12 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val query = s.toString()
 
-                if(query.isEmpty()) {
+                if(query.isBlank()) {
                     displayLabelFragment()
-                    mainFragment.filterNotes(s.toString())
-                    return
                 }
 
                 displayMainFragment()
-                mainFragment.filterNotes(s.toString())
+                searchViewModel.setSearchQuery(query)
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -156,9 +155,9 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         } else if(editingFragment is ManageLabelFragment) {
             if(editingFragment.clearFocus()) return
             hideManageLabelFragment()
-            binding.searchBar.requestFocus()
         } else {
             if (binding.searchBar.isFocused) {
+                binding.searchBar.text = null
                 binding.searchBar.clearFocus()
                 displayMainFragment()
                 return
@@ -207,6 +206,8 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
             .remove(f)
+            .hide(labelFragment)
+            .show(mainFragment)
             .commit()
     }
 
@@ -249,11 +250,27 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
                 // Handle the gallery action
             }
             R.id.nav_label -> {
-                // Handle the slideshow action
+                displayManageLabelFragment()
             }
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    @SuppressLint("SetTextI18n")
+    fun searchLabel(labelName: String) {
+        val editingFragment = supportFragmentManager.findFragmentById(binding.bigFragmentContainer.id)
+
+        if(editingFragment is EditNoteFragment) {
+            hideEditNoteFragment(editingFragment)
+            searchBar.setText("$:$labelName")
+            searchBar.requestFocus()
+        }
+
+        if(labelFragment.isVisibleInActivity()) {
+            displayMainFragment()
+            searchBar.setText("$:$labelName")
+        }
     }
 }
 

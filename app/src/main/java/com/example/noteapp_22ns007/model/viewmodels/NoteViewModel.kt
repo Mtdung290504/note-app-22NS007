@@ -32,6 +32,44 @@ class NoteViewModel(private val noteDao: NoteDao) : ViewModel() {
         }
     }
 
+    fun archive(noteId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.archive(noteId)
+        }
+    }
+
+    fun unArchive(noteId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unArchive(noteId)
+        }
+    }
+
+    fun moveToTrash(noteId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.moveToTrash(noteId)
+            if(noteId == insertedNoteId.value)
+                _insertedNoteId.postValue(-1)
+        }
+    }
+
+    fun removeFromTrash(noteId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.removeFromTrash(noteId)
+        }
+    }
+
+    fun pin(noteId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.pin(noteId)
+        }
+    }
+
+    fun unPin(noteId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unPin(noteId)
+        }
+    }
+
     fun addLabelToNote(crossRef: NoteLabelCrossRef) {
         viewModelScope.launch(Dispatchers.IO) {
             noteDao.addLabelToNote(crossRef)

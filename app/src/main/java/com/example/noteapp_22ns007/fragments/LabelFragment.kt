@@ -42,7 +42,7 @@ class LabelFragment : Fragment() {
     private fun initializeViewElements(binding: FragmentLabelBinding) {
         labelViewModel = (activity as MainActivity).labelViewModel
 
-        labelAdapter = LabelAdapter(emptyList())
+        labelAdapter = LabelAdapter(emptyList(), mainActivity, true)
 
         binding.labelRecyclerView.apply {
             layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)

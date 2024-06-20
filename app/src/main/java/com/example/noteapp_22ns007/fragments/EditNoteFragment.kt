@@ -35,7 +35,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.noteapp_22ns007.MainActivity
 import com.example.noteapp_22ns007.Utils
+import com.example.noteapp_22ns007.adapters.ChooseLabelAdapter
 import com.example.noteapp_22ns007.adapters.ImageAdapter
+import com.example.noteapp_22ns007.adapters.LabelAdapter
 import com.example.noteapp_22ns007.databinding.FragmentEditNoteBinding
 import com.example.noteapp_22ns007.model.database.Converters
 import com.example.noteapp_22ns007.model.database.entities.Image
@@ -52,6 +54,7 @@ import java.util.Locale
 
 class EditNoteFragment : Fragment() {
     private lateinit var mainActivity: MainActivity
+
     private var _binding: FragmentEditNoteBinding? = null
     private val binding get() = _binding!!
 
@@ -60,28 +63,34 @@ class EditNoteFragment : Fragment() {
     private var title: String? = null
     private lateinit var content: String
     private lateinit var dateCreated: Date
-    private lateinit var labels: List<Label>
 
+    // Image adapter
     private lateinit var imageAdapter: ImageAdapter
     private lateinit var imageLiveData: LiveData<List<Image>>
     private var images: List<Image> = listOf()
-    private val converters = Converters()
 
+    // Label adapter and Choose label adapter
+    private lateinit var labelAdapter: LabelAdapter
+    private lateinit var chooseLabelAdapter: ChooseLabelAdapter
+    private lateinit var checkedLabelLiveData: LiveData<List<Label>>
+    private var checkedLabels: List<Label> = listOf()
+
+    // Sub Fragments
     private lateinit var editNoteBottomSheetFragment: EditNoteBottomSheetFragment
+    private lateinit var chooseLabelBottomSheetFragment: ChooseLabelBottomSheetFragment
 
+    // Another
     private lateinit var currentPhotoPath: String
 
-    @Suppress("DEPRECATION", "CAST_NEVER_SUCCEEDS")
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        arguments?.let { bundle ->
-            noteId = bundle.getLong(NOTE_ID)
-            title = bundle.getString(TITLE)
-            content = bundle.getString(CONTENT) ?: ""
-            dateCreated = bundle.getSerializable(DATE_CREATED) as Date
-            val parcelableLabels: ArrayList<Parcelable>? = bundle.getParcelableArrayList(LABELS)
-            labels = parcelableLabels?.mapNotNull { it as? Label } ?: emptyList()
+        arguments?.let {
+            noteId = it.getLong(NOTE_ID)
+            title = it.getString(TITLE)
+            content = it.getString(CONTENT) ?: ""
+            dateCreated = it.getSerializable(DATE_CREATED) as Date
         }
 
         savedInstanceState?.let {
@@ -128,38 +137,22 @@ class EditNoteFragment : Fragment() {
             saveDataAndHide()
         }
 
-        // Initialize RecyclerView for images
-        imageAdapter = ImageAdapter(images)
-        binding.imageRecyclerView.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = imageAdapter
-        }
-        checkImageContainer()
-
-        imageLiveData = mainActivity.imageViewModel.getImageOfNote(noteId)
-        imageLiveData.observe(viewLifecycleOwner) { imagesOfNote ->
-            images = imagesOfNote
-            imageAdapter.updateImage(images)
-            checkImageContainer()
-        }
-
-        editNoteBottomSheetFragment = EditNoteBottomSheetFragment()
-            .setDeleteListener {
+        // Initialize RecyclerView and observe for images
+        imageAdapter = ImageAdapter(images, object: ImageAdapter.OnImageLongClickListener {
+            override fun onImageLongClick(image: Image) {
                 AlertDialog.Builder(context).apply {
-                    setTitle("Xác nhận xóa ghi chú")
-                    setMessage("\nBạn có chắc chắn muốn xóa ghi chú này không?")
+                    setTitle("Xác nhận xóa ảnh")
+                    setMessage("\nBạn có chắc chắn muốn xóa ảnh này không?")
                     setPositiveButton("Xóa") { _, _ ->
-                        val noteTitle = binding.noteTitle.text
-
-                        mainActivity.noteViewModel.deleteNoteById(noteId)
-                        mainActivity.imageViewModel.deleteImageOfNote(noteId)
-
-                        binding.noteTitle.text = null
-                        binding.noteContent.text = null
-                        editNoteBottomSheetFragment.dismiss()
-
-                        mainActivity.hideEditNoteFragment(this@EditNoteFragment)
-                        Utils.notification(view, "Đã xóa note \"$noteTitle\"") {}
+                        val path = image.image
+                        val file = File(path)
+                        if(file.exists()) {
+                            Log.d("DELETE 1 IMG", "Deleted file: $path")
+                            file.delete()
+                        } else {
+                            Log.d("DELETE 1 IMG", "File not found!: $path")
+                        }
+                        mainActivity.imageViewModel.delete(image)
                     }
                     setNegativeButton("Hủy") { dialog, _ ->
                         dialog.dismiss()
@@ -167,6 +160,83 @@ class EditNoteFragment : Fragment() {
                     create()
                     show()
                 }
+            }
+        })
+        binding.imageRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = imageAdapter
+        }
+        checkImageContainer()
+
+        // Observe images
+        imageLiveData = mainActivity.imageViewModel.getImageOfNote(noteId)
+        imageLiveData.observe(viewLifecycleOwner) { imagesOfNote ->
+            images = imagesOfNote
+            imageAdapter.updateImage(images)
+            checkImageContainer()
+        }
+
+        // Initialize RecyclerView and observe for labels of this note
+        labelAdapter = LabelAdapter(checkedLabels, mainActivity, false)
+        binding.labelRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = labelAdapter
+        }
+        checkLabelContainer()
+
+        // Observe labels of this note
+        checkedLabelLiveData = mainActivity.labelViewModel.getLabelsByNoteId(noteId)
+        checkedLabelLiveData.observe(viewLifecycleOwner) { labelOfNote ->
+            checkedLabels = labelOfNote
+            labelAdapter.updateLabel(checkedLabels)
+            checkLabelContainer()
+        }
+
+        // Initialize sub fragments
+        chooseLabelBottomSheetFragment = ChooseLabelBottomSheetFragment.newInstance(noteId)
+        editNoteBottomSheetFragment = EditNoteBottomSheetFragment()
+            .setDeleteListener {
+                // Real delete
+                /*
+                AlertDialog.Builder(context).apply {
+                    setTitle("Xác nhận xóa ghi chú")
+                    setMessage("\nBạn có chắc chắn muốn xóa ghi chú này không?")
+                    setPositiveButton("Xóa") { _, _ ->
+                        val noteTitle = binding.noteTitle.text
+
+                        mainActivity.noteViewModel.deleteNoteById(noteId)
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            imageAdapter.images.forEach{
+                                val path = it.image
+                                val file = File(path)
+                                if(file.exists()) {
+                                    Log.d("DELETE IMG", "Deleted file: $path")
+                                    file.delete()
+                                } else {
+                                    Log.d("DELETE IMG", "File not found!: $path")
+                                }
+                            }
+                        }
+                        mainActivity.imageViewModel.deleteImageOfNote(noteId)
+
+                        binding.noteTitle.text = null
+                        binding.noteContent.text = null
+                        editNoteBottomSheetFragment.dismiss()
+
+                        mainActivity.hideEditNoteFragment(this@EditNoteFragment)
+                        Utils.notification(view, "Đã xóa note \"$noteTitle\"", "") {}
+                    }
+                    setNegativeButton("Hủy") { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    create()
+                    show()
+                }*/
+
+                mainActivity.noteViewModel.moveToTrash(noteId)
+                Utils.notification(requireView(), "Đã chuyển ghi chú \"${title}\" vào thùng rác", "") {}
+                editNoteBottomSheetFragment.dismiss()
+                mainActivity.hideEditNoteFragment(this)
             }
             .setTakePictureListener {
                 if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
@@ -178,21 +248,37 @@ class EditNoteFragment : Fragment() {
                 }
             }
             .setLabelListener {
-                Toast.makeText(context, "Edit label for note: $noteId", Toast.LENGTH_SHORT).show()
+                @Suppress("DEPRECATION")
+                chooseLabelBottomSheetFragment.show(requireFragmentManager(), chooseLabelBottomSheetFragment.tag)
+                editNoteBottomSheetFragment.dismiss()
             }
             .setPinListener {
-                Toast.makeText(context, "Pinned note: $noteId", Toast.LENGTH_SHORT).show()
+                if(noteIsEmpty()) {
+                    Utils.notification(editNoteBottomSheetFragment.requireView(), "Ghi chú trống!", "") {}
+                    return@setPinListener
+                }
+
+                mainActivity.noteViewModel.pin(noteId)
+                Utils.notification(editNoteBottomSheetFragment.requireView(), "Đã ghim ghi chú \"${title}\"", "") {}
+                editNoteBottomSheetFragment.dismiss()
             }
             .setArchiveListener {
-                Toast.makeText(context, "Archived note: $noteId", Toast.LENGTH_SHORT).show()
-            }
+                if(noteIsEmpty()) {
+                    Utils.notification(editNoteBottomSheetFragment.requireView(), "Ghi chú trống!", "") {}
+                    return@setArchiveListener
+                }
 
-        setupSaveActionForEditText(binding.noteTitle)
-        setupSaveActionForEditText(binding.noteContent)
+                mainActivity.noteViewModel.archive(noteId)
+                Utils.notification(editNoteBottomSheetFragment.requireView(), "Đã lưu trữ ghi chú \"${title}\"", "") {}
+                editNoteBottomSheetFragment.dismiss()
+            }
         binding.moreOptions.setOnClickListener {
             @Suppress("DEPRECATION")
             editNoteBottomSheetFragment.show(requireFragmentManager(), editNoteBottomSheetFragment.tag)
         }
+
+        setupSaveActionForEditText(binding.noteTitle)
+        setupSaveActionForEditText(binding.noteContent)
 
         binding.fabSave.setOnClickListener {
             saveDataAndHide()
@@ -221,24 +307,41 @@ class EditNoteFragment : Fragment() {
 
     private fun checkImageContainer() {
         if(imageAdapter.itemCount == 0) {
+            binding.labelForImage.visibility = View.GONE
             binding.imageRecyclerView.visibility = View.GONE
         } else {
+            binding.labelForImage.visibility = View.VISIBLE
             binding.imageRecyclerView.visibility = View.VISIBLE
         }
     }
 
-    fun saveDataAndHide() {
-        val noteTitle = binding.noteTitle.text.toString().trim()
-        val noteContent = binding.noteContent.text.toString().trim()
+    private fun checkLabelContainer() {
+        if(labelAdapter.itemCount == 0) {
+            binding.labelForLabel.visibility = View.GONE
+            binding.labelRecyclerView.visibility = View.GONE
+        } else {
+            binding.labelForLabel.visibility = View.VISIBLE
+            binding.labelRecyclerView.visibility = View.VISIBLE
+        }
+    }
 
-        if (noteTitle.isBlank() && noteContent.isBlank()) {
+    fun saveDataAndHide() {
+        if (noteIsEmpty()) {
             mainActivity.noteViewModel.deleteNoteById(noteId)
-            Toast.makeText(context, "Đã xóa ghi chú trống", Toast.LENGTH_SHORT).show()
+            Utils.notification(view, "Đã xóa ghi chú trống", "") {}
         } else {
             saveData()
         }
 
         mainActivity.hideEditNoteFragment(this)
+    }
+
+    private fun noteIsEmpty(): Boolean {
+        val noteTitle = binding.noteTitle.text.toString().trim()
+        val noteContent = binding.noteContent.text.toString().trim()
+        val imageCount = imageAdapter.itemCount
+
+        return noteTitle.isBlank() && noteContent.isBlank() && imageCount == 0
     }
 
     override fun onDestroyView() {
@@ -322,9 +425,8 @@ class EditNoteFragment : Fragment() {
         imagePath ?: return bitmap
 
         val ei = ExifInterface(imagePath)
-        val orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
 
-        return when (orientation) {
+        return when (ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
             ExifInterface.ORIENTATION_ROTATE_90 -> rotateImage(bitmap, 90)
             ExifInterface.ORIENTATION_ROTATE_180 -> rotateImage(bitmap, 180)
             ExifInterface.ORIENTATION_ROTATE_270 -> rotateImage(bitmap, 270)
@@ -371,19 +473,15 @@ class EditNoteFragment : Fragment() {
         private const val TITLE = "title"
         private const val CONTENT = "content"
         private const val DATE_CREATED = "dateCreated"
-        private const val LABELS = "labels"
 
-        @Suppress("CAST_NEVER_SUCCEEDS")
         @JvmStatic
-        fun newInstance(noteId: Long, title: String, content: String, dateCreated: Date, labels: List<Label>): EditNoteFragment {
+        fun newInstance(noteId: Long, title: String, content: String, dateCreated: Date): EditNoteFragment {
             return EditNoteFragment().apply {
                 arguments = Bundle().apply {
                     putLong(NOTE_ID, noteId)
                     putString(TITLE, title)
                     putString(CONTENT, content)
                     putSerializable(DATE_CREATED, dateCreated)
-                    val parcelableLabels = labels.map { it as Parcelable }
-                    putParcelableArrayList(LABELS, ArrayList(parcelableLabels))
                 }
             }
         }

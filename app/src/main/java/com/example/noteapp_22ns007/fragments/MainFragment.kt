@@ -8,9 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.LiveData
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.noteapp_22ns007.MainActivity
+import com.example.noteapp_22ns007.Utils
 import com.example.noteapp_22ns007.adapters.NoteAdapter
 import com.example.noteapp_22ns007.databinding.FragmentMainBinding
 import com.example.noteapp_22ns007.model.database.entities.Note
@@ -30,7 +32,6 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
 
     private var currentNoteLiveData: LiveData<NoteWithLabels>? = null
     private var allNotes: List<NoteWithLabels> = emptyList()
-    private var keywordToFilter: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -43,15 +44,34 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
         noteRecyclerView = binding.noteRecyclerView
         noteViewModel = (activity as MainActivity).noteViewModel
 
-        noteAdapter = NoteAdapter(emptyList(), this)
+        noteAdapter = NoteAdapter(emptyList(), mainActivity, this)
         binding.noteRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = noteAdapter
         }
 
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val note = noteAdapter.notes[position].note
+
+                mainActivity.noteViewModel.archive(note.noteId!!)
+                Utils.notification(requireView(), "Đã lưu trữ ghi chú \"${note.title}\"", "Hoàn tác") {
+                    mainActivity.noteViewModel.unArchive(note.noteId)
+                }
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(noteRecyclerView)
+
         // Observe data from ViewModel and update Adapter
         noteViewModel.getNotesWithLabels().observe(viewLifecycleOwner) { notesWithLabels ->
+//            Log.d("AllNote Debug: ", notesWithLabels.toString())
             allNotes = notesWithLabels
+
             if(allNotes.isEmpty()) {
                 binding.noteRecyclerView.visibility = View.GONE
                 binding.emptyNoteView.visibility = View.VISIBLE
@@ -59,7 +79,15 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
                 binding.noteRecyclerView.visibility = View.VISIBLE
                 binding.emptyNoteView.visibility = View.GONE
             }
+
             noteAdapter.updateNotes(allNotes)
+
+            // Observe search value
+            mainActivity.searchViewModel.searchQuery.removeObservers(viewLifecycleOwner)
+            mainActivity.searchViewModel.searchQuery.observe(viewLifecycleOwner) {queryStr ->
+                filterNotes(queryStr)
+            }
+
         }
 
         addButton.setOnClickListener {
@@ -79,11 +107,15 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
                         // Check if the change note is not due to update or deletion
                         Log.d("MainFragment", insertedNote.toString())
                         val editNoteFragmentInstance = EditNoteFragment.newInstance(
-                            insertedNote.note.noteId!!, "", "", insertedNote.note.dateCreated, insertedNote.labels
+                            insertedNote.note.noteId!!, "", "", insertedNote.note.dateCreated
                         )
                         mainActivity.displayEditNoteFragment(editNoteFragmentInstance)
                     }
-                    filterNotes(keywordToFilter)
+
+                    mainActivity.searchViewModel.searchQuery.observe(viewLifecycleOwner) {queryStr ->
+                        filterNotes(queryStr)
+                        mainActivity.searchViewModel.searchQuery.removeObservers(viewLifecycleOwner)
+                    }
                 }
             }
         }
@@ -98,28 +130,15 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
 
     override fun onNoteClick(note: NoteWithLabels) {
         val editNoteFragmentInstance = EditNoteFragment.newInstance(
-            note.note.noteId!!, note.note.title, note.note.content, note.note.dateCreated, note.labels
+            note.note.noteId!!, note.note.title, note.note.content, note.note.dateCreated
         )
         mainActivity.displayEditNoteFragment(editNoteFragmentInstance)
     }
 
-    fun filterNotes(query: String) {
-        if(query.isBlank()) {
-            noteAdapter.updateNotes(allNotes)
-            keywordToFilter = ""
-            return
-        }
-
-        val filteredNotes = allNotes.filter {
-            it.note.title.contains(query, ignoreCase = true)
-                    || it.note.content.contains(query, ignoreCase = true)
-                    || it.labels.map {
-                        label -> label.name
-                    }.toString().contains(query, ignoreCase = true)
-        }
+    private fun filterNotes(query: String) {
+        val filteredNotes = getFilteredNotes(query)
 
         noteAdapter.updateNotes(filteredNotes)
-        keywordToFilter = query
 
         if(filteredNotes.isEmpty()) {
             binding.noteRecyclerView.visibility = View.GONE
@@ -127,6 +146,38 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
         } else {
             binding.noteRecyclerView.visibility = View.VISIBLE
             binding.emptyNoteView.visibility = View.GONE
+        }
+    }
+
+    private fun getFilteredNotes(query: String): List<NoteWithLabels> {
+        if (query.isBlank())
+            return allNotes
+
+        val parts = query.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        val keywords = mutableListOf<String>()
+        val labels = mutableListOf<String>()
+
+        for (part in parts) {
+            if (part.startsWith("$:")) {
+                labels.add(part.substring(2).trim())
+                continue
+            }
+
+            keywords.add(part)
+        }
+
+        return allNotes.filter { noteWithLabels ->
+            val matchesKeywords = keywords.all { keyword ->
+                noteWithLabels.note.title.contains(keyword, ignoreCase = true) ||
+                        noteWithLabels.note.content.contains(keyword, ignoreCase = true) ||
+                        noteWithLabels.labels.any { it.name.contains(keyword, ignoreCase = true) }
+            }
+
+            val matchesLabels = labels.all { label ->
+                noteWithLabels.labels.any { it.name.equals(label, ignoreCase = false) }
+            }
+
+            matchesKeywords && matchesLabels
         }
     }
 }

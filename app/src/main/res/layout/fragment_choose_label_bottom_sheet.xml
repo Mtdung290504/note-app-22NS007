@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/c222"
+    android:foreground="@drawable/z_radius_10"
+    tools:context=".fragments.ChooseLabelBottomSheetFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/addLabelEdt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_toStartOf="@id/addLabelBtn"
+                android:hint="Nhãn mới"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="15dp"
+                android:textColorHint="@color/cddd"
+                android:textColor="@color/white" />
+
+            <ImageButton
+                android:id="@+id/addLabelBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="5dp"
+                android:padding="10dp"
+                android:background="@drawable/z_note_item_background"
+                android:foreground="?attr/selectableItemBackground"
+                android:src="@drawable/z_ic_add"
+                android:layout_centerVertical="true"/>
+        </RelativeLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/chooseLabelRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="@color/c222"
+            android:orientation="horizontal"
+            android:padding="4dp"
+            android:scrollbars="horizontal" />
+    </LinearLayout>
+
+</FrameLayout>

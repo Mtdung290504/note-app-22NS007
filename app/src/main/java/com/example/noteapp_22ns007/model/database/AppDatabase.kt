@@ -15,7 +15,7 @@ import com.example.noteapp_22ns007.model.database.entities.Image
 
 @Database(
     entities = [Note::class, Label::class, Image::class, NoteLabelCrossRef::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

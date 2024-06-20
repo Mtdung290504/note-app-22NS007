@@ -15,7 +15,7 @@ import com.example.noteapp_22ns007.model.database.entities.Label
 import com.example.noteapp_22ns007.model.viewmodels.LabelViewModel
 
 class ManageLabelAdapter(
-    private var labels: MutableList<Label>,
+    var labels: MutableList<Label>,
     private val labelViewModel: LabelViewModel,
     private val f: ManageLabelFragment
 ) : RecyclerView.Adapter<ManageLabelAdapter.ManageLabelViewHolder>() {
@@ -46,6 +46,10 @@ class ManageLabelAdapter(
                     if(currentLabelName == oldLabelName) {
                         binding.editTextManageLabel.clearFocus()
                         return@setOnClickListener
+                    } else if(currentLabelName.isBlank()) {
+                        binding.editTextManageLabel.setText(oldLabelName)
+                        Utils.notification(f.view, "Nhãn không được trống", "") {}
+                        return@setOnClickListener
                     }
 
                     val newLabel = Label(label.labelId, currentLabelName)
@@ -55,10 +59,10 @@ class ManageLabelAdapter(
                     updateLabelSuccessLiveData = labelViewModel.updateResult
                     updateLabelSuccessLiveData?.observe(f.viewLifecycleOwner) {
                         success -> if (!success) {
-                            Utils.notification(f.view, "Nhãn \"$currentLabelName\" đã tồn tại") {}
+                            Utils.notification(f.view, "Nhãn \"$currentLabelName\" đã tồn tại", "") {}
                             binding.editTextManageLabel.setText(oldLabelName)
                         } else {
-                            Utils.notification(f.view, "Cập nhật thành công") {}
+                            Utils.notification(f.view, "Cập nhật thành công", "") {}
                         }
                         updateLabelSuccessLiveData!!.removeObservers(f.viewLifecycleOwner)
                         return@observe
@@ -75,7 +79,7 @@ class ManageLabelAdapter(
                     showDeleteConfirmationDialog(
                         onConfirm = {
                             labelViewModel.deleteLabelById(labelToDelete.labelId!!)
-                            Utils.notification(f.view, "Đã xóa nhãn \"${labelToDelete.name}\"") {}
+                            Utils.notification(f.view, "Đã xóa nhãn \"${labelToDelete.name}\"", "") {}
                         },
                         onCancel = {}
                     )

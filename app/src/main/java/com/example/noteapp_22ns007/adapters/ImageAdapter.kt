@@ -10,7 +10,7 @@ import com.example.noteapp_22ns007.databinding.ImageItemBinding
 import com.example.noteapp_22ns007.model.database.entities.Image
 import java.io.File
 
-class ImageAdapter(private var images: List<Image>) : RecyclerView.Adapter<ImageAdapter.ImageViewHolder>() {
+class ImageAdapter(var images: List<Image>, private var longClickListener: OnImageLongClickListener) : RecyclerView.Adapter<ImageAdapter.ImageViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder {
         val binding = ImageItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -19,7 +19,7 @@ class ImageAdapter(private var images: List<Image>) : RecyclerView.Adapter<Image
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
         val image = images[position]
-        holder.bind(image.image)
+        holder.bind(image)
     }
 
     override fun getItemCount(): Int = images.size
@@ -30,18 +30,26 @@ class ImageAdapter(private var images: List<Image>) : RecyclerView.Adapter<Image
         notifyDataSetChanged()
     }
 
-    class ImageViewHolder(private val binding: ImageItemBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(imagePath: String) {
-//            val imageFile = File(imagePath)
-//            if (imageFile.exists()) {
-//                val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath)
-//                binding.imageView.setImageBitmap(bitmap)
-//            }
+    inner class ImageViewHolder(private val binding: ImageItemBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(image: Image) {
             @Suppress("DEPRECATION")
             Glide.with(itemView.context)
-                .load(imagePath) // image.image là đường dẫn đến ảnh trong Image entity
+                .load(File(image.image)) // Sử dụng đường dẫn của ảnh từ Image entity
                 .thumbnail(0.3f)
                 .into(binding.imageView)
+
+            binding.root.setOnLongClickListener {
+                longClickListener.onImageLongClick(image)
+                true
+            }
         }
+    }
+
+    fun setOnImageLongClickListener(listener: OnImageLongClickListener) {
+        this.longClickListener = listener
+    }
+
+    interface OnImageLongClickListener {
+        fun onImageLongClick(image: Image)
     }
 }

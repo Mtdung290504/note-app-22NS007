@@ -19,9 +19,6 @@ interface NoteDao {
     @Update
     suspend fun update(note: Note)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun addLabelToNote(crossRef: NoteLabelCrossRef)
-
     /**
      * Bổ sung vào ViewModel
      * */
@@ -42,6 +39,10 @@ interface NoteDao {
 
         @Query("UPDATE notes SET pinned = 0 WHERE noteId = :noteId")
         suspend fun unPin(noteId: Long)
+    /***/
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addLabelToNote(crossRef: NoteLabelCrossRef)
 
     @Query("DELETE FROM notes_n_labels WHERE noteId = :noteId AND labelId = :labelId")
     suspend fun removeLabelFromNote(noteId: Long, labelId: Long)
@@ -49,10 +50,17 @@ interface NoteDao {
     @Query("DELETE FROM notes WHERE noteId = :noteId")
     suspend fun deleteNoteById(noteId: Long)
 
-    @Query("DELETE FROM notes_n_labels WHERE noteId IN (SELECT noteId FROM notes WHERE title = '' AND content = '')")
+    @Query("DELETE FROM notes_n_labels WHERE noteId IN (" +
+            "SELECT noteId FROM notes " +
+            "WHERE title = '' " +
+            "AND content = ''" +
+            "AND (SELECT COUNT (*) FROM images WHERE noteId = notes.noteId) = 0)")
     suspend fun deleteLabelOfEmptyNotes()
 
-    @Query("DELETE FROM notes WHERE title = '' AND content = ''")
+    @Query("DELETE FROM notes " +
+            "WHERE title = '' " +
+            "AND content = '' " +
+            "AND (SELECT COUNT (*) FROM images WHERE noteId = notes.noteId) = 0")
     suspend fun deleteEmptyNotes()
 
     @Query("DELETE FROM notes_n_labels WHERE noteId = :noteId")

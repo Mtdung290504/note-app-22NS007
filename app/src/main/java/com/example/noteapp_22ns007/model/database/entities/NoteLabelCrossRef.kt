@@ -4,6 +4,6 @@ import androidx.room.Entity
 
 @Entity(tableName = "notes_n_labels", primaryKeys = ["noteId", "labelId"])
 data class NoteLabelCrossRef(
-    val noteId: Int,
-    val labelId: Int
+    val noteId: Long,
+    val labelId: Long
 )
