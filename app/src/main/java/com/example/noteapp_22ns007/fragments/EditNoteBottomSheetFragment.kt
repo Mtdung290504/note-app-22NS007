@@ -16,6 +16,7 @@ class EditNoteBottomSheetFragment : BottomSheetDialogFragment() {
     private lateinit var labelClickHandler: () -> Unit
     private lateinit var pinClickHandler: () -> Unit
     private lateinit var archiveClickHandler: () -> Unit
+    var pinState: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -30,6 +31,11 @@ class EditNoteBottomSheetFragment : BottomSheetDialogFragment() {
     }
 
     private fun initializeViewElements() {
+        if(pinState)
+            binding.pinText.text = "Bỏ ghim"
+        else
+            binding.pinText.text = "Ghim"
+
         binding.apply {
             takePicture.setOnClickListener {
                 takePictureClickHandler()
@@ -55,6 +61,19 @@ class EditNoteBottomSheetFragment : BottomSheetDialogFragment() {
         binding.label.setOnClickListener(null)
         binding.pin.setOnClickListener(null)
         binding.archive.setOnClickListener(null)
+    }
+
+    fun setPinState(pinState: Boolean): EditNoteBottomSheetFragment {
+        this.pinState = pinState
+
+        if(_binding != null) {
+            if(pinState)
+                binding.pinText.text = "Bỏ ghim"
+            else
+                binding.pinText.text = "Ghim"
+        }
+
+        return this
     }
 
     fun setTakePictureListener(takePictureClickHandler: () -> Unit): EditNoteBottomSheetFragment {

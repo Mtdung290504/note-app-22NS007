@@ -263,14 +263,12 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
 
         if(editingFragment is EditNoteFragment) {
             hideEditNoteFragment(editingFragment)
-            searchBar.setText("$:$labelName")
-            searchBar.requestFocus()
+        } else if(labelFragment.isVisibleInActivity()) {
+            displayMainFragment()
         }
 
-        if(labelFragment.isVisibleInActivity()) {
-            displayMainFragment()
-            searchBar.setText("$:$labelName")
-        }
+        searchBar.setText("$:$labelName,")
+        searchBar.requestFocus()
     }
 }
 

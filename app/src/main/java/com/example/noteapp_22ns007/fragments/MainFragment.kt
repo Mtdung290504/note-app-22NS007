@@ -71,6 +71,9 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
         noteViewModel.getNotesWithLabels().observe(viewLifecycleOwner) { notesWithLabels ->
 //            Log.d("AllNote Debug: ", notesWithLabels.toString())
             allNotes = notesWithLabels
+            allNotes.forEach {
+                Log.d("QueryRs", it.note.debugStr())
+            }
 
             if(allNotes.isEmpty()) {
                 binding.noteRecyclerView.visibility = View.GONE
@@ -92,7 +95,7 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
 
         addButton.setOnClickListener {
             mainActivity.noteViewModel.insert(Note(
-                null, "", "", Date()
+                null, "", "", Date(), archived = false, pinned = false, deleted = false
             ))
 
             // Add a new observer for SingleLiveEvent
@@ -107,7 +110,7 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
                         // Check if the change note is not due to update or deletion
                         Log.d("MainFragment", insertedNote.toString())
                         val editNoteFragmentInstance = EditNoteFragment.newInstance(
-                            insertedNote.note.noteId!!, "", "", insertedNote.note.dateCreated
+                            insertedNote.note.noteId!!, "", "", insertedNote.note.dateCreated, insertedNote.note.pinned!!
                         )
                         mainActivity.displayEditNoteFragment(editNoteFragmentInstance)
                     }
@@ -130,7 +133,7 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
 
     override fun onNoteClick(note: NoteWithLabels) {
         val editNoteFragmentInstance = EditNoteFragment.newInstance(
-            note.note.noteId!!, note.note.title, note.note.content, note.note.dateCreated
+            note.note.noteId!!, note.note.title, note.note.content, note.note.dateCreated, note.note.pinned!!
         )
         mainActivity.displayEditNoteFragment(editNoteFragmentInstance)
     }

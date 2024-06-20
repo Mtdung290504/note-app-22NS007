@@ -1,40 +1,57 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="15dp"
     android:layout_margin="10dp"
     android:background="@drawable/z_note_item_background"
-    android:foreground="?attr/selectableItemBackground">
+    android:foreground="?attr/selectableItemBackground"
+    android:padding="15dp">
+
+<!--    <ImageView-->
+<!--        android:id="@+id/icPin"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignParentEnd="true"-->
+<!--        android:layout_alignParentTop="true"-->
+<!--        android:padding="1dp"-->
+<!--        android:src="@drawable/z_ic_pin"-->
+<!--        tools:ignore="ContentDescription" />-->
 
     <TextView
         android:id="@+id/note_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Note Title"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
         android:layout_marginBottom="15dp"
-        android:textSize="20sp"
-        android:textStyle="bold"
         android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Note Title"
         android:textColor="@color/white"
-        android:maxLines="1"/>
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/note_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Note Content..."
-        android:textSize="14sp"
-        android:lineHeight="18sp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/note_title"
         android:ellipsize="end"
+        android:lineHeight="18sp"
         android:maxLines="11"
-        android:textColor="@color/white"/>
+        android:text="Note Content..."
+        android:textColor="@color/white"
+        android:textSize="14sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/label_recycler_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="15dp"/>
-</LinearLayout>
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@+id/note_content"
+        android:layout_marginTop="15dp"
+        android:orientation="horizontal" />
+</RelativeLayout>

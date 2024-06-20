@@ -19,6 +19,9 @@ interface NoteDao {
     @Update
     suspend fun update(note: Note)
 
+    @Query("SELECT pinned FROM notes WHERE noteId = :noteId")
+    fun getPinState(noteId: Long): Boolean
+
     /**
      * Bổ sung vào ViewModel
      * */
@@ -67,11 +70,11 @@ interface NoteDao {
     suspend fun removeNoteLabels(noteId: Long)
 
     @Transaction
-    @Query("SELECT * FROM notes WHERE pinned = 0 AND deleted = 0 AND archived = 0 ORDER BY dateCreated DESC")
+    @Query("SELECT * FROM notes WHERE deleted = 0 AND archived = 0 ORDER BY pinned DESC, dateCreated DESC")
     fun getNotesWithLabels(): LiveData<List<NoteWithLabels>>
 
     @Transaction
-    @Query("SELECT * FROM notes WHERE noteId = :noteId ORDER BY dateCreated DESC")
+    @Query("SELECT * FROM notes WHERE noteId = :noteId")
     fun getNoteWithLabels(noteId: Long): LiveData<NoteWithLabels>
 
     @Transaction

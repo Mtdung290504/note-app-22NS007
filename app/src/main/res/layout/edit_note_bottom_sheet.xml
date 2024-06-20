@@ -100,6 +100,7 @@
                 android:src="@drawable/z_ic_pin"
                 android:importantForAccessibility="no" />
             <TextView
+                android:id="@+id/pinText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Ghim"

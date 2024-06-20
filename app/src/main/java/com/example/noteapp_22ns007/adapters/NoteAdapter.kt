@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.noteapp_22ns007.MainActivity
@@ -40,11 +41,18 @@ class NoteAdapter(
 
     inner class NoteViewHolder(private val binding: NoteItemBinding, private val clickListener: NoteClickListener) : RecyclerView.ViewHolder(binding.root) {
         fun bind(note: NoteWithLabels, isSelected: Boolean) {
+            val drawableStart = ContextCompat.getDrawable(mainActivity, R.drawable.z_ic_pin)
+
             binding.noteTitle.text = note.note.title
             binding.noteContent.text = note.note.content
 
             binding.noteTitle.visibility = if (binding.noteTitle.text.isNullOrBlank()) View.GONE else View.VISIBLE
             binding.noteContent.visibility = if (binding.noteContent.text.isNullOrBlank()) View.GONE else View.VISIBLE
+            if(note.note.pinned == true)
+                binding.noteTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(drawableStart, null, null, null)
+            else
+                binding.noteTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, null, null)
+            if(note.note.pinned == true) Log.d("DebugPin", note.note.title)
 
             if (note.labels.isNotEmpty()) {
                 binding.labelRecyclerView.visibility = View.VISIBLE

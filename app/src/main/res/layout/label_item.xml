@@ -9,6 +9,7 @@
     android:layout_marginBottom="0dp"
     android:layout_marginEnd="8dp"
     android:background="@drawable/z_label_background"
+    android:foreground="?attr/selectableItemBackground"
     android:gravity="center_vertical">
 
     <!-- Text view for the label name -->

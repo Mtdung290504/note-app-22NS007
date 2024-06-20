@@ -14,4 +14,6 @@ data class Note(
     val archived: Boolean? = false,
     val pinned: Boolean? = false,
     val deleted: Boolean? = false
-)
+) {
+    fun debugStr(): String = "id:$noteId, title:$title, pinned?:$pinned, archived?:$archived, deleted?:$deleted"
+}

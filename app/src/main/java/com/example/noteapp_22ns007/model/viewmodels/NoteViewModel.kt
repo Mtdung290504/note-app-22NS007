@@ -104,6 +104,8 @@ class NoteViewModel(private val noteDao: NoteDao) : ViewModel() {
         noteDao.deleteNoteById(noteId) // Sau đó xóa note
     }
 
+    fun getPinState(noteId: Long) = noteDao.getPinState(noteId)
+
     fun getNotesWithLabels() = noteDao.getNotesWithLabels()
 
     fun getNotesByLabelId(labelId: Long) = noteDao.getNotesByLabelId(labelId)

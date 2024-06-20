@@ -63,6 +63,7 @@ class EditNoteFragment : Fragment() {
     private var title: String? = null
     private lateinit var content: String
     private lateinit var dateCreated: Date
+    private var pinState: Boolean = false
 
     // Image adapter
     private lateinit var imageAdapter: ImageAdapter
@@ -71,7 +72,6 @@ class EditNoteFragment : Fragment() {
 
     // Label adapter and Choose label adapter
     private lateinit var labelAdapter: LabelAdapter
-    private lateinit var chooseLabelAdapter: ChooseLabelAdapter
     private lateinit var checkedLabelLiveData: LiveData<List<Label>>
     private var checkedLabels: List<Label> = listOf()
 
@@ -91,6 +91,7 @@ class EditNoteFragment : Fragment() {
             title = it.getString(TITLE)
             content = it.getString(CONTENT) ?: ""
             dateCreated = it.getSerializable(DATE_CREATED) as Date
+            pinState = it.getBoolean(PIN_STATE)
         }
 
         savedInstanceState?.let {
@@ -119,11 +120,13 @@ class EditNoteFragment : Fragment() {
     private fun saveData() {
         val noteTitle = binding.noteTitle.text.toString().trim()
         val noteContent = binding.noteContent.text.toString().trim()
+
         val updatedNote = Note(
             noteId = noteId,
             title = noteTitle,
             content = noteContent,
-            dateCreated = dateCreated
+            dateCreated = dateCreated,
+            pinned = pinState
         )
 
         mainActivity.noteViewModel.update(updatedNote)
@@ -194,7 +197,9 @@ class EditNoteFragment : Fragment() {
 
         // Initialize sub fragments
         chooseLabelBottomSheetFragment = ChooseLabelBottomSheetFragment.newInstance(noteId)
+        Log.d("DEBUG Pin state", pinState.toString())
         editNoteBottomSheetFragment = EditNoteBottomSheetFragment()
+            .setPinState(pinState)
             .setDeleteListener {
                 // Real delete
                 /*
@@ -258,8 +263,18 @@ class EditNoteFragment : Fragment() {
                     return@setPinListener
                 }
 
-                mainActivity.noteViewModel.pin(noteId)
-                Utils.notification(editNoteBottomSheetFragment.requireView(), "Đã ghim ghi chú \"${title}\"", "") {}
+                if(!editNoteBottomSheetFragment.pinState) {
+                    mainActivity.noteViewModel.pin(noteId)
+                    pinState = true
+                    editNoteBottomSheetFragment.setPinState(true)
+                    Utils.notification(view, "Đã ghim ghi chú \"${title}\"", "") {}
+                } else {
+                    mainActivity.noteViewModel.pin(noteId)
+                    pinState = false
+                    editNoteBottomSheetFragment.setPinState(false)
+                    Utils.notification(view, "Đã bỏ ghim ghi chú \"${title}\"", "") {}
+                }
+
                 editNoteBottomSheetFragment.dismiss()
             }
             .setArchiveListener {
@@ -269,7 +284,7 @@ class EditNoteFragment : Fragment() {
                 }
 
                 mainActivity.noteViewModel.archive(noteId)
-                Utils.notification(editNoteBottomSheetFragment.requireView(), "Đã lưu trữ ghi chú \"${title}\"", "") {}
+                Utils.notification(view, "Đã lưu trữ ghi chú \"${title}\"", "") {}
                 editNoteBottomSheetFragment.dismiss()
             }
         binding.moreOptions.setOnClickListener {
@@ -473,15 +488,17 @@ class EditNoteFragment : Fragment() {
         private const val TITLE = "title"
         private const val CONTENT = "content"
         private const val DATE_CREATED = "dateCreated"
+        private const val PIN_STATE = "pinState"
 
         @JvmStatic
-        fun newInstance(noteId: Long, title: String, content: String, dateCreated: Date): EditNoteFragment {
+        fun newInstance(noteId: Long, title: String, content: String, dateCreated: Date, pinState: Boolean): EditNoteFragment {
             return EditNoteFragment().apply {
                 arguments = Bundle().apply {
                     putLong(NOTE_ID, noteId)
                     putString(TITLE, title)
                     putString(CONTENT, content)
                     putSerializable(DATE_CREATED, dateCreated)
+                    putBoolean(PIN_STATE, pinState)
                 }
             }
         }
