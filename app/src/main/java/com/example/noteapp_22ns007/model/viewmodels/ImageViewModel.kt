@@ -24,9 +24,17 @@ class ImageViewModel(private val imageDao: ImageDao) : ViewModel() {
 
     fun getImageOfNote(noteId: Long) = imageDao.getImageOfNote(noteId)
 
+    fun getImageOfAllNotes(noteIds: List<Long>) = imageDao.getImageOfAllNotes(noteIds)
+
     fun deleteImageOfNote(noteId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             imageDao.deleteImageOfNote(noteId)
+        }
+    }
+
+    fun deleteImageOfAllNote(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            imageDao.deleteImageOfAllNote(noteIds)
         }
     }
 

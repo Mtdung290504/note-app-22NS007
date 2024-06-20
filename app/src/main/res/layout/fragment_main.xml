@@ -23,18 +23,6 @@
                     android:layout_height="match_parent" />
             </RelativeLayout>
 
-<!--        </ScrollView>-->
-
-        <!-- Dưới cùng: hai nút -->
-<!--        <LinearLayout-->
-<!--            android:id="@+id/bottom_buttons"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_alignParentBottom="true"-->
-<!--            android:background="#444444"-->
-<!--            android:orientation="horizontal"-->
-<!--            android:padding="20dp">-->
-<!--        </LinearLayout>-->
         <RelativeLayout
             android:id="@+id/emptyNoteView"
             android:layout_width="match_parent"

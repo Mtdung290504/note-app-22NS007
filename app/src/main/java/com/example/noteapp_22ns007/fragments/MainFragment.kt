@@ -90,7 +90,6 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
             mainActivity.searchViewModel.searchQuery.observe(viewLifecycleOwner) {queryStr ->
                 filterNotes(queryStr)
             }
-
         }
 
         addButton.setOnClickListener {
@@ -137,6 +136,26 @@ class MainFragment : Fragment(), NoteAdapter.NoteClickListener {
         )
         mainActivity.displayEditNoteFragment(editNoteFragmentInstance)
     }
+
+    override fun onFirstItemSelected() {
+        mainActivity.showOptions()
+    }
+
+    override fun onSelectionCleared() {
+        mainActivity.hideOptions()
+    }
+
+    override fun onItemSelected() {
+        mainActivity.checkPin()
+    }
+
+    override fun onItemUnselected() {
+        mainActivity.checkPin()
+    }
+
+    fun clearSelections() = noteAdapter.clearSelections()
+
+    fun getSelectedNotes() = noteAdapter.getSelectedNotes()
 
     private fun filterNotes(query: String) {
         val filteredNotes = getFilteredNotes(query)

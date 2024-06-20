@@ -28,20 +28,38 @@ interface NoteDao {
         @Query("UPDATE notes SET archived = 1 WHERE noteId = :noteId")
         suspend fun archive(noteId: Long)
 
+        @Query("UPDATE notes SET archived = 1 WHERE noteId IN (:noteIds)")
+        suspend fun archiveAll(noteIds: List<Long>)
+
         @Query("UPDATE notes SET archived = 0 WHERE noteId = :noteId")
         suspend fun unArchive(noteId: Long)
+
+        @Query("UPDATE notes SET archived = 0 WHERE noteId IN (:noteIds)")
+        suspend fun unArchiveAll(noteIds: List<Long>)
 
         @Query("UPDATE notes SET deleted = 1 WHERE noteId = :noteId")
         suspend fun moveToTrash(noteId: Long)
 
+        @Query("UPDATE notes SET deleted = 1 WHERE noteId IN (:noteIds)")
+        suspend fun moveAllToTrash(noteIds: List<Long>)
+
         @Query("UPDATE notes SET deleted = 0 WHERE noteId = :noteId")
         suspend fun removeFromTrash(noteId: Long)
+
+        @Query("UPDATE notes SET deleted = 0 WHERE noteId IN (:noteIds)")
+        suspend fun removeAllFromTrash(noteIds: List<Long>)
 
         @Query("UPDATE notes SET pinned = 1 WHERE noteId = :noteId")
         suspend fun pin(noteId: Long)
 
+        @Query("UPDATE notes SET pinned = 1 WHERE noteId IN (:noteIds)")
+        suspend fun pinAll(noteIds: List<Long>)
+
         @Query("UPDATE notes SET pinned = 0 WHERE noteId = :noteId")
         suspend fun unPin(noteId: Long)
+
+        @Query("UPDATE notes SET pinned = 0 WHERE noteId IN (:noteIds)")
+        suspend fun unPinAll(noteIds: List<Long>)
     /***/
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -52,6 +70,9 @@ interface NoteDao {
 
     @Query("DELETE FROM notes WHERE noteId = :noteId")
     suspend fun deleteNoteById(noteId: Long)
+
+    @Query("DELETE FROM notes WHERE noteId IN (:noteIds)")
+    suspend fun deleteAllNoteByIds(noteIds: List<Long>)
 
     @Query("DELETE FROM notes_n_labels WHERE noteId IN (" +
             "SELECT noteId FROM notes " +
@@ -69,9 +90,20 @@ interface NoteDao {
     @Query("DELETE FROM notes_n_labels WHERE noteId = :noteId")
     suspend fun removeNoteLabels(noteId: Long)
 
+    @Query("DELETE FROM notes_n_labels WHERE noteId IN (:noteIds)")
+    suspend fun removeAllNoteLabels(noteIds: List<Long>)
+
     @Transaction
     @Query("SELECT * FROM notes WHERE deleted = 0 AND archived = 0 ORDER BY pinned DESC, dateCreated DESC")
     fun getNotesWithLabels(): LiveData<List<NoteWithLabels>>
+
+    @Transaction
+    @Query("SELECT * FROM notes WHERE deleted = 1 ORDER BY dateCreated DESC")
+    fun getDeletedNotesWithLabels(): LiveData<List<NoteWithLabels>>
+
+    @Transaction
+    @Query("SELECT * FROM notes WHERE archived = 1 ORDER BY dateCreated DESC")
+    fun getArchivedNotesWithLabels(): LiveData<List<NoteWithLabels>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE noteId = :noteId")

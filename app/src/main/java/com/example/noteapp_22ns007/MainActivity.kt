@@ -1,11 +1,15 @@
 package com.example.noteapp_22ns007
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -18,6 +22,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.noteapp_22ns007.fragments.LabelFragment
 import com.example.noteapp_22ns007.fragments.MainFragment
 import com.example.noteapp_22ns007.databinding.ActivityMainBinding
+import com.example.noteapp_22ns007.fragments.ArchivedNotesBottomSheetFragment
+import com.example.noteapp_22ns007.fragments.DeletedNotesBottomSheetFragment
 import com.example.noteapp_22ns007.fragments.EditNoteFragment
 import com.example.noteapp_22ns007.fragments.ManageLabelFragment
 import com.example.noteapp_22ns007.model.database.AppDatabase
@@ -34,7 +40,7 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     private lateinit var binding: ActivityMainBinding
 
     // View elements
-    private lateinit var mainFragment: MainFragment
+    lateinit var mainFragment: MainFragment
     private lateinit var labelFragment: LabelFragment
     private lateinit var manageLabelFragment: ManageLabelFragment
     private lateinit var searchBar: EditText
@@ -51,6 +57,10 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     private lateinit var noteDao: NoteDao
     private lateinit var labelDao: LabelDao
     private lateinit var imageDao: ImageDao
+
+    // Sub Fragments
+    private lateinit var deleteNotesBottomSheetFragment: DeletedNotesBottomSheetFragment
+    private lateinit var archivedNotesBottomSheetFragment: ArchivedNotesBottomSheetFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,14 +115,97 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
 
                 if(query.isBlank()) {
                     displayLabelFragment()
+                } else {
+                    displayMainFragment()
                 }
 
-                displayMainFragment()
                 searchViewModel.setSearchQuery(query)
             }
 
             override fun afterTextChanged(s: Editable?) {}
         })
+
+        binding.cancelBtn.setOnClickListener {
+            mainFragment.clearSelections()
+            hideOptions()
+        }
+
+        binding.archiveBtn.setOnClickListener {
+            val selectedNotes = mainFragment.getSelectedNotes()
+            Log.d("DELETE ALL DEBUG", "Click")
+
+            noteViewModel.archiveAll(selectedNotes.map { it.note.noteId!! })
+            mainFragment.clearSelections()
+            hideOptions()
+        }
+
+        binding.deleteBtn.setOnClickListener {
+            val selectedNotes = mainFragment.getSelectedNotes()
+            Log.d("DELETE ALL DEBUG", "Click")
+
+            noteViewModel.moveAllToTrash(selectedNotes.map { it.note.noteId!! })
+            mainFragment.clearSelections()
+            hideOptions()
+        }
+    }
+
+    fun showOptions() {
+        binding.multipleChoiceCtn.fadeIn()
+    }
+    fun hideOptions() {
+        binding.multipleChoiceCtn.fadeOut()
+    }
+    fun checkPin() {
+        val selectedNotes = mainFragment.getSelectedNotes()
+        var isUnpin = true
+
+        selectedNotes.forEach {
+            if(!it.note.pinned!!)
+                isUnpin = false
+        }
+
+        if(isUnpin) {
+            binding.pinTextView.text = "Bỏ ghim"
+            binding.iconPin.setImageResource(R.drawable.z_ic_un_pin)
+            setPinAction {
+                noteViewModel.unPinAll(selectedNotes.map { it.note.noteId!! })
+                mainFragment.clearSelections()
+                hideOptions()
+            }
+        } else {
+            binding.pinTextView.text = "Ghim"
+            binding.iconPin.setImageResource(R.drawable.z_ic_pin)
+            setPinAction {
+                noteViewModel.pinAll(selectedNotes.filter { !it.note.pinned!! }.map { it.note.noteId!! })
+                mainFragment.clearSelections()
+                hideOptions()
+            }
+        }
+    }
+    private fun setPinAction(pinAction: () -> Unit) {
+        binding.pinBtn.setOnClickListener(null)
+        binding.pinBtn.setOnClickListener {
+            pinAction()
+        }
+    }
+
+    private fun View.fadeIn(duration: Long = 300) {
+        this.visibility = View.VISIBLE
+        val fadeIn = ObjectAnimator.ofFloat(this, "alpha", 0f, 1f)
+        fadeIn.duration = duration
+        fadeIn.start()
+    }
+
+    private fun View.fadeOut(duration: Long = 300, onEnd: () -> Unit = {}) {
+        val fadeOut = ObjectAnimator.ofFloat(this, "alpha", 1f, 0f)
+        fadeOut.duration = duration
+        fadeOut.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                this@fadeOut.visibility = View.GONE
+                onEnd()
+            }
+        })
+        fadeOut.start()
     }
 
     private fun initializeFragments(savedInstanceState: Bundle?) {
@@ -244,10 +337,12 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_trash -> {
-                // Handle the home action
+                deleteNotesBottomSheetFragment = DeletedNotesBottomSheetFragment()
+                deleteNotesBottomSheetFragment.show(supportFragmentManager, deleteNotesBottomSheetFragment.tag)
             }
             R.id.nav_archive -> {
-                // Handle the gallery action
+                archivedNotesBottomSheetFragment = ArchivedNotesBottomSheetFragment()
+                archivedNotesBottomSheetFragment.show(supportFragmentManager, archivedNotesBottomSheetFragment.tag)
             }
             R.id.nav_label -> {
                 displayManageLabelFragment()
@@ -269,6 +364,7 @@ class MainActivity: AppCompatActivity(), NavigationView.OnNavigationItemSelected
 
         searchBar.setText("$:$labelName,")
         searchBar.requestFocus()
+        searchBar.setSelection(searchBar.text.length)
     }
 }
 

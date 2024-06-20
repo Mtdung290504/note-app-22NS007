@@ -201,43 +201,6 @@ class EditNoteFragment : Fragment() {
         editNoteBottomSheetFragment = EditNoteBottomSheetFragment()
             .setPinState(pinState)
             .setDeleteListener {
-                // Real delete
-                /*
-                AlertDialog.Builder(context).apply {
-                    setTitle("Xác nhận xóa ghi chú")
-                    setMessage("\nBạn có chắc chắn muốn xóa ghi chú này không?")
-                    setPositiveButton("Xóa") { _, _ ->
-                        val noteTitle = binding.noteTitle.text
-
-                        mainActivity.noteViewModel.deleteNoteById(noteId)
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            imageAdapter.images.forEach{
-                                val path = it.image
-                                val file = File(path)
-                                if(file.exists()) {
-                                    Log.d("DELETE IMG", "Deleted file: $path")
-                                    file.delete()
-                                } else {
-                                    Log.d("DELETE IMG", "File not found!: $path")
-                                }
-                            }
-                        }
-                        mainActivity.imageViewModel.deleteImageOfNote(noteId)
-
-                        binding.noteTitle.text = null
-                        binding.noteContent.text = null
-                        editNoteBottomSheetFragment.dismiss()
-
-                        mainActivity.hideEditNoteFragment(this@EditNoteFragment)
-                        Utils.notification(view, "Đã xóa note \"$noteTitle\"", "") {}
-                    }
-                    setNegativeButton("Hủy") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    create()
-                    show()
-                }*/
-
                 mainActivity.noteViewModel.moveToTrash(noteId)
                 Utils.notification(requireView(), "Đã chuyển ghi chú \"${title}\" vào thùng rác", "") {}
                 editNoteBottomSheetFragment.dismiss()
@@ -269,7 +232,7 @@ class EditNoteFragment : Fragment() {
                     editNoteBottomSheetFragment.setPinState(true)
                     Utils.notification(view, "Đã ghim ghi chú \"${title}\"", "") {}
                 } else {
-                    mainActivity.noteViewModel.pin(noteId)
+                    mainActivity.noteViewModel.unPin(noteId)
                     pinState = false
                     editNoteBottomSheetFragment.setPinState(false)
                     Utils.notification(view, "Đã bỏ ghim ghi chú \"${title}\"", "") {}
@@ -286,6 +249,7 @@ class EditNoteFragment : Fragment() {
                 mainActivity.noteViewModel.archive(noteId)
                 Utils.notification(view, "Đã lưu trữ ghi chú \"${title}\"", "") {}
                 editNoteBottomSheetFragment.dismiss()
+                mainActivity.hideEditNoteFragment(this)
             }
         binding.moreOptions.setOnClickListener {
             @Suppress("DEPRECATION")

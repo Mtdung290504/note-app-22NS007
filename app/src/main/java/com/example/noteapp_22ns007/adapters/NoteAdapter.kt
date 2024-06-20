@@ -18,7 +18,6 @@ class NoteAdapter(
     private val mainActivity: MainActivity,
     private val clickListener: NoteClickListener
 ) : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
-
     private val selectedItems = mutableSetOf<Long>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
@@ -71,14 +70,21 @@ class NoteAdapter(
             // Thay đổi giao diện khi item được chọn
             if (isSelected) {
                 binding.root.setBackgroundResource(R.drawable.z_note_item_selected_background)
+                clickListener.onItemSelected()
             } else {
                 binding.root.setBackgroundResource(R.drawable.z_note_item_background)
+                clickListener.onItemUnselected()
             }
 
             binding.root.setOnClickListener {
                 if (selectedItems.contains(note.note.noteId)) {
                     selectedItems.remove(note.note.noteId)
                     notifyItemChanged(adapterPosition)
+
+                    // Kiểm tra nếu item cuối cùng bị hủy chọn
+                    if (selectedItems.isEmpty()) {
+                        clickListener.onSelectionCleared()
+                    }
                     return@setOnClickListener
                 }
 
@@ -96,6 +102,11 @@ class NoteAdapter(
             binding.root.setOnLongClickListener {
                 if (!selectedItems.contains(note.note.noteId)) {
                     selectedItems.add(note.note.noteId!!)
+
+                    // Kiểm tra item đầu tiên được chọn
+                    if (selectedItems.size == 1) {
+                        clickListener.onFirstItemSelected()
+                    }
                 }
                 notifyItemChanged(adapterPosition)
                 true
@@ -103,7 +114,21 @@ class NoteAdapter(
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    fun clearSelections() {
+        selectedItems.clear()
+        notifyDataSetChanged()
+    }
+
+    fun getSelectedNotes(): List<NoteWithLabels> {
+        return notes.filter { selectedItems.contains(it.note.noteId) }
+    }
+
     interface NoteClickListener {
         fun onNoteClick(note: NoteWithLabels)
+        fun onFirstItemSelected()
+        fun onSelectionCleared()
+        fun onItemSelected()
+        fun onItemUnselected()
     }
 }

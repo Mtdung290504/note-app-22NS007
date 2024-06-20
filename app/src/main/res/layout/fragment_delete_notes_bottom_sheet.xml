@@ -1,51 +1,65 @@
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".fragments.DeletedNotesBottomSheetFragment">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/c222">
+        android:background="@color/c222"
+        tools:context=".MainActivity">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/searchBarCtn">
+            android:layout_height="match_parent">
 
-            <ImageButton
-                android:id="@+id/btnOpenNav"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:src="@drawable/z_ic_menu"
-                android:background="@color/c222" />
-            <EditText
-                android:id="@+id/search_bar"
-                android:layout_width="0dp"
-                android:layout_weight="7"
+            <TextView
+                android:id="@+id/trashLabel"
+                android:layout_alignParentTop="true"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:background="@drawable/z_search_bar_background"
-                android:hint="Tìm ghi chú, ngăn cách bằng dấu ,..."
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="6dp"
-                android:textColor="#FFFFFF"
-                android:textColorHint="#CCCCCC"
-                android:textSize="14sp"
-                android:drawableStart="@android:drawable/ic_menu_search" />
-        </LinearLayout>
+                android:text="Thùng rác"
+                android:textSize="20dp"
+                android:padding="10dp"
+                android:layout_marginBottom="10dp"
+                android:textColor="@color/white"
+                app:drawableStartCompat="@drawable/z_ic_delete_note" />
 
-        <FrameLayout
-            android:id="@+id/fragment_container"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/trash_recycler_view"
+                android:layout_below="@+id/trashLabel"
+                android:fitsSystemWindows="true"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/emptyTrashView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_below="@id/searchBarCtn"
-            android:layout_marginTop="16dp" />
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/emptyTrashImageView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/z_ic_trash_170"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Thùng rác trống"
+                android:textSize="18sp"
+                android:textColor="@color/white"
+                android:layout_below="@id/emptyTrashImageView"
+                android:layout_centerHorizontal="true" />
+        </RelativeLayout>
 
         <LinearLayout
             android:id="@+id/multipleChoiceCtn"
@@ -58,35 +72,9 @@
             android:gravity="center"
             android:visibility="gone">
 
-            <!-- Ghim -->
-            <LinearLayout
-                android:id="@+id/pinBtn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="?attr/selectableItemBackground">
-
-                <ImageView
-                    android:id="@+id/icon_pin"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/z_ic_pin" />
-
-                <TextView
-                    android:id="@+id/pinTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ghim"
-                    android:textSize="12sp"
-                    android:textColor="@color/white"
-                    android:layout_marginTop="5dp"/>
-            </LinearLayout>
-
             <!-- Lưu trữ -->
             <LinearLayout
-                android:id="@+id/archiveBtn"
+                android:id="@+id/recoverBtn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -95,15 +83,14 @@
                 android:background="?attr/selectableItemBackground">
 
                 <ImageView
-                    android:id="@+id/icon_archive"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/z_ic_archive" />
+                    android:src="@drawable/z_ic_recover" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Lưu trữ"
+                    android:text="Khôi phục"
                     android:textSize="12sp"
                     android:textColor="@color/white"
                     android:layout_marginTop="5dp"/>
@@ -128,7 +115,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Xóa"
+                    android:text="Xóa vĩnh viễn"
                     android:textSize="12sp"
                     android:textColor="@color/white"
                     android:layout_marginTop="5dp"/>
@@ -159,18 +146,6 @@
                     android:layout_marginTop="5dp"/>
             </LinearLayout>
         </LinearLayout>
-
-        <androidx.cardview.widget.CardView
-            android:id="@id/big_fragment_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:cardBackgroundColor="@android:color/transparent" />
     </RelativeLayout>
 
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        app:menu="@menu/drawer_menu" />
-</androidx.drawerlayout.widget.DrawerLayout>
+</FrameLayout>

@@ -34,7 +34,15 @@ class NoteViewModel(private val noteDao: NoteDao) : ViewModel() {
 
     fun archive(noteId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unPin(noteId)
             noteDao.archive(noteId)
+        }
+    }
+
+    fun archiveAll(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unPinAll(noteIds)
+            noteDao.archiveAll(noteIds)
         }
     }
 
@@ -44,11 +52,25 @@ class NoteViewModel(private val noteDao: NoteDao) : ViewModel() {
         }
     }
 
+    fun unArchiveAll(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unArchiveAll(noteIds)
+        }
+    }
+
     fun moveToTrash(noteId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unPin(noteId)
             noteDao.moveToTrash(noteId)
             if(noteId == insertedNoteId.value)
                 _insertedNoteId.postValue(-1)
+        }
+    }
+
+    fun moveAllToTrash(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unPinAll(noteIds)
+            noteDao.moveAllToTrash(noteIds)
         }
     }
 
@@ -58,15 +80,33 @@ class NoteViewModel(private val noteDao: NoteDao) : ViewModel() {
         }
     }
 
+    fun removeAllFromTrash(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.removeAllFromTrash(noteIds)
+        }
+    }
+
     fun pin(noteId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             noteDao.pin(noteId)
         }
     }
 
+    fun pinAll(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.pinAll(noteIds)
+        }
+    }
+
     fun unPin(noteId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             noteDao.unPin(noteId)
+        }
+    }
+
+    fun unPinAll(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteDao.unPinAll(noteIds)
         }
     }
 
@@ -104,11 +144,21 @@ class NoteViewModel(private val noteDao: NoteDao) : ViewModel() {
         noteDao.deleteNoteById(noteId) // Sau đó xóa note
     }
 
-    fun getPinState(noteId: Long) = noteDao.getPinState(noteId)
+    fun deleteAllNoteByIds(noteIds: List<Long>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            safeDeleteAllNoteByIds(noteIds)
+        }
+    }
+    private suspend fun safeDeleteAllNoteByIds(noteIds: List<Long>) {
+        noteDao.removeAllNoteLabels(noteIds)
+        noteDao.deleteAllNoteByIds(noteIds)
+    }
 
     fun getNotesWithLabels() = noteDao.getNotesWithLabels()
 
-    fun getNotesByLabelId(labelId: Long) = noteDao.getNotesByLabelId(labelId)
+    fun getDeletedNoteWithLabels() = noteDao.getDeletedNotesWithLabels()
+
+    fun getArchivedNoteWithLabels() = noteDao.getArchivedNotesWithLabels()
 
     fun getNoteById(labelId: Long) = noteDao.getNoteWithLabels(labelId)
 

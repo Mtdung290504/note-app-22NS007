@@ -18,6 +18,12 @@ interface ImageDao {
     @Query("SELECT * FROM images WHERE noteId = :noteId")
     fun getImageOfNote(noteId: Long): LiveData<List<Image>>
 
+    @Query("SELECT * FROM images WHERE noteId IN (:noteIds)")
+    fun getImageOfAllNotes(noteIds: List<Long>): LiveData<List<Image>>
+
     @Query("DELETE FROM images WHERE noteId = :noteId")
     suspend fun deleteImageOfNote(noteId: Long)
+
+    @Query("DELETE FROM images WHERE noteId IN (:noteIds)")
+    suspend fun deleteImageOfAllNote(noteIds: List<Long>)
 }
